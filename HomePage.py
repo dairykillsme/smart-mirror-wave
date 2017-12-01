@@ -83,7 +83,7 @@ newsauthor_position = [0,0]
 
 #User input Variables
 navigation = 'home' #start on the homepage
-selectednews = int(len(newspaper) / 2) #start with middle news item selected
+selectednews = 0
 scroll = 0
 
 #Gesture Pad
@@ -130,6 +130,11 @@ def tap(position):
 def touch(position):
     global touchtxt
     touchtxt = position
+
+
+#NEWBLOCK
+newslabel = titlefont.render('Headlines', True, white, black)
+newslabel_w, newslabel_h = newslabel.get_rect().size
 
 
 #formatting
@@ -183,11 +188,11 @@ while on:
         #WEATHER BLOCK
         #set up elements
         weatherimg = pygame.image.load(weathericons[weather['icon_to_use']])
-        basictemp = numberfont.render(str(int(weather['current_temp'])) + '°F', True, white)
-        basictempcaption = captionfont.render('Current', True, white)
+        basictemp = numberfont.render(str(int(weather['current_temp'])) + '°F', True, white, black)
+        basictempcaption = captionfont.render('Current', True, white, black)
         basictempcaption = pygame.transform.rotate(basictempcaption, 270)
-        basicfeelslike = numberfont.render(str(int(float(weather['current_realfeel']))) + '°F', True, white)
-        feelslikecaption = captionfont.render('Feels Like', True, white)
+        basicfeelslike = numberfont.render(str(int(float(weather['current_realfeel']))) + '°F', True, white, black)
+        feelslikecaption = captionfont.render('Feels Like', True, white, black)
         feelslikecaption = pygame.transform.rotate(feelslikecaption, 270)
 
         #get elements sizes
@@ -211,8 +216,8 @@ while on:
 
         #TIMEDATE BLOCK
         #set up elements
-        timeblock = timefont.render(displaytime, True, white)
-        dateblock = datefont.render(displaydate, True, white)
+        timeblock = timefont.render(displaytime, True, white, black)
+        dateblock = datefont.render(displaydate, True, white, black)
 
         #get element sizes
         timeblock_w, timeblock_h = timeblock.get_rect().size
@@ -227,33 +232,52 @@ while on:
         screen.blit(dateblock, dateblock_position)
 
         #NEWS BLOCK
-        #set up elements
-        newsblock1 = textfont.render(newspaper[selectednews - 2]['title'], True, dark_grey)
-        newsblock2 = textfont.render(newspaper[selectednews - 1]['title'], True, grey)
-        newsblock3 = textfont.render(newspaper[selectednews]['title'], True, white)
-        newsblock4 = textfont.render(newspaper[selectednews + 1]['title'], True, grey)
-        newsblock5 = textfont.render(newspaper[selectednews + 2]['title'], True, dark_grey)
+        #block of visible news
+        visiblenews = Rect(0, h - 400, w, 300)
         
-        #get element sizes
-        newsblock1_w, newsblock1_h = newsblock1.get_rect().size
-        newsblock2_w, newsblock2_h = newsblock2.get_rect().size
-        newsblock3_w, newsblock3_h = newsblock3.get_rect().size
-        newsblock4_w, newsblock4_h = newsblock4.get_rect().size
-        newsblock5_w, newsblock5_h = newsblock5.get_rect().size
+        #news label
+        newslabel_position = [(w / 2) - (newslabel_w / 2), visiblenews.top + newslabel_h]
+        screen.blit(newslabel, newslabel_position)
         
-        #position relative to bottom news item
-        newsblock5_position = [(w / 2) - (newsblock5_w / 2), h - 30]
-        newsblock4_position = [(w / 2) - (newsblock4_w / 2), newsblock5_position[1] - newsblock4_h]
-        newsblock3_position = [(w / 2) - (newsblock3_w / 2), newsblock4_position[1] - newsblock3_h]
-        newsblock2_position = [(w / 2) - (newsblock2_w / 2), newsblock3_position[1] - newsblock2_h]
-        newsblock1_position = [(w / 2) - (newsblock1_w / 2), newsblock2_position[1] - newsblock1_h]
-        
-        #draw elements
-        screen.blit(newsblock1, newsblock1_position)
-        screen.blit(newsblock2, newsblock2_position)
-        screen.blit(newsblock3, newsblock3_position)
-        screen.blit(newsblock4, newsblock4_position)
-        screen.blit(newsblock5, newsblock5_position)
+        #news headlines
+        for article in range (0, len(newspaper) - 1):
+
+            newsitem = textfont.render(newspaper[article]['title'], True, white, black)
+            newsitem_w, newsitem_h = newsitem.get_rect().size
+            newsitem_position = [(w / 2) - (newsitem_w / 2), scroll + (h / 2) + (article * newsitem_h)]
+
+            #check if news item is in visible news box
+            if newsitem_position[1] < visiblenews.bottom and newsitem_position[1] > visiblenews.top:
+
+                #check if center of visible box is inside news item and selected item if true
+                if visiblenews.top + visiblenews.height / 2 > newsitem_position[1] and visiblenews.top + visiblenews.height / 2 < newsitem_position[1] + newsitem_h:
+                    selectednews = article
+                #check if center of visible box is below bottom of news item
+                elif visiblenews.top + visiblenews.height / 2 > newsitem_position[1] + newsitem_h:
+                    rgbval = 240 * (newsitem_position[1] - visiblenews.top) / (visiblenews.height / 2)
+                    
+                    if rgbval > 255:
+                        rgbval = 255
+                    elif rgbval < 0:
+                        rgbval = 0
+                        
+                    color = (rgbval, rgbval, rgbval)
+                    newsitem = textfont.render(newspaper[article]['title'], True, color, black)
+                else:
+                    rgbval = 240 * (visiblenews.bottom - newsitem_position[1]) / (visiblenews.height / 2)
+                    
+                    if rgbval > 255:
+                        rgbval = 255
+                    elif rgbval < 0:
+                        rgbval = 0
+                        
+                    color = (rgbval, rgbval, rgbval)
+                    newsitem = textfont.render(newspaper[article]['title'], True, color, black)
+                
+                screen.blit(newsitem, newsitem_position)
+
+
+        scroll = - airwheelint / 20
 
         #event listner
         for event in pygame.event.get():
@@ -291,14 +315,14 @@ while on:
         wrappedtext = wraptext(newspaper[selectednews]['title'], titlefont, 900)
 
 
-        newstitle = titlefont.render(wrappedtext[0], True, white)
+        newstitle = titlefont.render(wrappedtext[0], True, white, black)
         newstitle_w, newstitle_h = newstitle.get_rect().size
         newstitle_position = [(w / 2) - (newstitle_w / 2), scroll + newstitle_h]
         screen.blit(newstitle, newstitle_position)
             
         for line in range(1, len(wrappedtext)):
             try:
-                newstitle = titlefont.render(wrappedtext[line], True, white)
+                newstitle = titlefont.render(wrappedtext[line], True, white, black)
                 newstitle_w, newstitle_h = newstitle.get_rect().size
                 newstitle_position = [newstitle_position[0], newstitle_h + newstitle_position[1]]
                 screen.blit(newstitle, newstitle_position)
@@ -317,14 +341,14 @@ while on:
     
         wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 800)
 
-        newsbody = textfont.render(wrappedtext[0].lstrip(), True, white)
+        newsbody = textfont.render(wrappedtext[0].lstrip(), True, white, black)
         newsbody_w, newsbody_h = newsbody.get_rect().size
         newsbody_position = [(w / 2) - (newsbody_w / 2), 50 + newsimg_position[1] + newsimg_h]
         screen.blit(newsbody, newsbody_position)
 
         for line in range(1, len(wrappedtext)):
             try:
-                newsbody = textfont.render(wrappedtext[line].lstrip(), True, white)
+                newsbody = textfont.render(wrappedtext[line].lstrip(), True, white, black)
                 newsbody_w, newsbody_h = newsbody.get_rect().size
                 newsbody_position = [newsbody_position[0], newsbody_h + newsbody_position[1]]
                 screen.blit(newsbody, newsbody_position)
@@ -334,7 +358,7 @@ while on:
             except:
                 print('you suckxd')
 
-        scroll = airwheelint / 10
+        scroll = - airwheelint / 10
 
         for event in pygame.event.get():
             if event.type == QUIT:
