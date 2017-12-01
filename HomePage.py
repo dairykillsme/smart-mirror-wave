@@ -5,12 +5,13 @@ from WeatherParser import weatherBasic
 from TimeAndDate import getDateTime
 from NewsParser import newsBasic
 import urllib.request
+import flicklib
 
 #Pygame Set up
 pygame.init()
 
 screen = pygame.display.set_mode()
-pygame.display.toggle_fullscreen()
+#pygame.display.toggle_fullscreen()
 pygame.display.set_caption('Smart Mirror V0.1')
 
 clock = pygame.time.Clock()
@@ -85,6 +86,52 @@ navigation = 'home' #start on the homepage
 selectednews = int(len(newspaper) / 2) #start with middle news item selected
 scroll = 0
 
+#Gesture Pad
+global xyztxt
+global flicktxt
+global airwheelint
+global touchtxt
+global taptxt
+global doubletaptxt
+
+xyztxt = ''
+flicktxt = ''
+airwheelint = 0
+touchtxt = ''
+taptxt = ''
+doubletaptxt = ''
+
+@flicklib.move()
+def move(x, y, z):
+    global xyztxt
+    xyztxt = '{:5.3f} {:5.3f} {:5.3f}'.format(x,y,z)
+
+@flicklib.flick()
+def flick(start,finish):
+    global flicktxt
+    flicktxt = start[0].upper() + finish[0].upper()
+
+@flicklib.airwheel()
+def spinny(delta):
+    global airwheelint
+    airwheelint += delta
+
+@flicklib.double_tap()
+def doubletap(position):
+    global doubletaptxt
+    doubletaptxt = position
+
+@flicklib.tap()
+def tap(position):
+    global taptxt
+    taptxt = position
+
+@flicklib.touch()
+def touch(position):
+    global touchtxt
+    touchtxt = position
+
+
 #formatting
 def wraptext(text, font, width):
     """Wrap text to fit inside a given width when rendered.
@@ -132,28 +179,6 @@ while on:
 
     #HOME PAGE
     if navigation == 'home':
-        #event listner
-        for event in pygame.event.get():
-            if event.type == GETWEATHER:
-                weatherBasic('Burlington', 'VT', weather, hours)
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN:
-                if (event.key == K_RIGHT): #gesture from east to west will replace
-                    navigation = 'news'
-                    scroll = 0
-                    if newspaper[selectednews]['image'] != 'NULL':
-                        urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
-                        newsimg = pygame.image.load('newsimage.jpg')
-                if (event.key == K_w): #finger spin will replace
-                    #move selected news item up
-                    if selectednews <= len(newspaper) - 4 :
-                        selectednews += 1
-                if (event.key == K_s): #finger spin will replace
-                    #move selected news item down
-                    if selectednews >= 2 :
-                        selectednews -= 1
         
         #WEATHER BLOCK
         #set up elements
@@ -230,23 +255,40 @@ while on:
         screen.blit(newsblock4, newsblock4_position)
         screen.blit(newsblock5, newsblock5_position)
 
-    #NEWS PAGE
-    #event listner
-    elif navigation == 'news':
+        #event listner
         for event in pygame.event.get():
+            if event.type == GETWEATHER:
+                weatherBasic('Burlington', 'VT', weather, hours)
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN:
-                if (event.key == K_LEFT):
-                    navigation = 'home'
-                elif (event.key == K_w):#remove with addition of airwheel
-                    scroll -= 20
-                elif (event.key == K_s):#remove with addition of airwheel
-                    scroll += 20
+                if (event.key == K_w): #finger spin will replace
+                    #move selected news item up
+                    if selectednews <= len(newspaper) - 4 :
+                        selectednews += 1
+                if (event.key == K_s): #finger spin will replace
+                    #move selected news item down
+                    if selectednews >= 2 :
+                        selectednews -= 1
+                        
+        if flicktxt == 'EW': #gesture from east to west for news
+            navigation = 'news'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
+            if newspaper[selectednews]['image'] != 'NULL':
+                urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
+                newsimg = pygame.image.load('newsimage.jpg')
+
+        if doubletaptxt != '': #double tap to turn off
+            on = False
+
+    #NEWS PAGE
+    elif navigation == 'news':
 
         #TITLE (Text Wrapped, scrolled)
-        wrappedtext = wraptext(newspaper[selectednews]['title'], titlefont, 1250)
+        wrappedtext = wraptext(newspaper[selectednews]['title'], titlefont, 900)
 
 
         newstitle = titlefont.render(wrappedtext[0], True, white)
@@ -266,18 +308,18 @@ while on:
         #Draw image if one exists
         if newspaper[selectednews]['image'] != 'NULL':
             newsimg_w, newsimg_h = newsimg.get_rect().size
-            newsimg_position = [(w / 2 - (newsimg_w / 2), newstitle_h + newstitle_position[1] + 5)]
+            newsimg_position = [(w / 2) - (newsimg_w / 2), newstitle_h + newstitle_position[1] + 5]
             screen.blit(newsimg, newsimg_position)
         else:
             newsimg_position = [0, newstitle_h + newstitle_position[1]]
             newsimg_h = 0
             
     
-        wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 1100)
+        wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 800)
 
         newsbody = textfont.render(wrappedtext[0].lstrip(), True, white)
         newsbody_w, newsbody_h = newsbody.get_rect().size
-        newsbody_position = [(w / 2) - 550, 50 + newsimg_position[1] + newsimg_h]
+        newsbody_position = [(w / 2) - (newsbody_w / 2), 50 + newsimg_position[1] + newsimg_h]
         screen.blit(newsbody, newsbody_position)
 
         for line in range(1, len(wrappedtext)):
@@ -287,12 +329,28 @@ while on:
                 newsbody_position = [newsbody_position[0], newsbody_h + newsbody_position[1]]
                 screen.blit(newsbody, newsbody_position)
 
-                if newsbody_w < 900:
+                if newsbody_w < 700:
                     newsbody_position[1] += newsbody_h
             except:
                 print('you suckxd')
 
-            
+        scroll = airwheelint / 10
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if (event.key == K_w):#remove with addition of airwheel
+                    scroll -= 20
+                if (event.key == K_s):#remove with addition of airwheel
+                    scroll += 20
+
+        if flicktxt == 'WE': #gesture from east to west for news
+            navigation = 'home'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
 
     pygame.display.update()
     clock.tick(60)

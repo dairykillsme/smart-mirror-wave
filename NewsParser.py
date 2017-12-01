@@ -5,7 +5,7 @@ import time
 def newsBasic(newspaper):
     #Get 1 day ago
     today = int(time.time() * 1000)
-    day = 86400000
+    day = 86400000 * 2
     yesterday = today - day
 
     #Get Page from WebHose language:english site_type:news site:nytimes.com performance_score:10 
@@ -18,7 +18,6 @@ def newsBasic(newspaper):
 
     #Get Info
     for article in range(0, len(parsed_json['posts']) - 1):
-        print(article)
         newspaper[article] = {}
         newspaper[article]['people'] = {}
         
