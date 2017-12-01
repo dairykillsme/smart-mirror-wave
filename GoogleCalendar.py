@@ -54,12 +54,11 @@ def get_calendar(credentials, calendar):
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
 
-    today = datetime.datetime.now().strftime('%Y-%m-%dT%00:00:00-04:00')# '-04:00' indicates timezone
-    tomorrow = (datetime.datetime.now() + datetime.timedelta(days = 1)).strftime('%Y-%m-%dT%00:00:00-04:00')# '-04:00' indicates timezone
+    today = datetime.datetime.now().strftime('%Y-%m-%dT00:00:00-04:00')# '-04:00' indicates timezone
     
-    print('Getting the upcoming 10 events')
+    print('Getting the upcoming 20 events')
     eventsResult = service.events().list(
-        calendarId='primary', timeMin=today, timeMax=tomorrow, maxResults=10, singleEvents=True,
+        calendarId='primary', timeMin=today, maxResults=15, singleEvents=True,
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
 
@@ -79,8 +78,11 @@ def get_calendar(credentials, calendar):
         except:
             calendar[event]['location'] = 'No Location Available'
 
+"""
+USAGE:
+
 calendar = {}
 credentials = get_credentials()
 get_calendar(credentials, calendar)
 print(calendar)
-
+"""
