@@ -1,11 +1,16 @@
 import pygame, sys, textwrap
 from pygame import *
 from pygame.locals import *
-from WeatherParser import weatherBasic
+from WeatherParser import weatherBasic, weatherRadar, weatherHourly
 from TimeAndDate import getDateTime
 from NewsParser import newsBasic
+from GoogleCalendar import get_credentials, get_calendar
 import urllib.request
 import flicklib
+import datetime
+
+#google calendar set up
+credentials = get_credentials()
 
 #Pygame Set up
 pygame.init()
@@ -22,6 +27,7 @@ displaytime, displaydate, hours, minutes, meridiem = getDateTime()
 #declare data variables
 weather = {}
 newspaper = {}
+calendar = {}
 date = ''
 time = ''
 
@@ -136,6 +142,11 @@ def touch(position):
 newslabel = titlefont.render('Headlines', True, white, black)
 newslabel_w, newslabel_h = newslabel.get_rect().size
 
+#CALENDAR PAGE
+get_calendar(credentials,calendar)
+calendar_buffer = 50
+markerwidth = 700
+eventBlock_w = 600
 
 #formatting
 def wraptext(text, font, width):
@@ -236,7 +247,7 @@ while on:
         visiblenews = Rect(0, h - 400, w, 300)
         
         #news label
-        newslabel_position = [(w / 2) - (newslabel_w / 2), visiblenews.top + newslabel_h]
+        newslabel_position = [(w / 2) - (newslabel_w / 2), visiblenews.top - newslabel_h]
         screen.blit(newslabel, newslabel_position)
         
         #news headlines
@@ -254,7 +265,7 @@ while on:
                     selectednews = article
                 #check if center of visible box is below bottom of news item
                 elif visiblenews.top + visiblenews.height / 2 > newsitem_position[1] + newsitem_h:
-                    rgbval = 240 * (newsitem_position[1] - visiblenews.top) / (visiblenews.height / 2)
+                    rgbval = 220 * (newsitem_position[1] - visiblenews.top) / (visiblenews.height / 2)
                     
                     if rgbval > 255:
                         rgbval = 255
@@ -264,7 +275,7 @@ while on:
                     color = (rgbval, rgbval, rgbval)
                     newsitem = textfont.render(newspaper[article]['title'], True, color, black)
                 else:
-                    rgbval = 240 * (visiblenews.bottom - newsitem_position[1]) / (visiblenews.height / 2)
+                    rgbval = 220 * (visiblenews.bottom - newsitem_position[1]) / (visiblenews.height / 2)
                     
                     if rgbval > 255:
                         rgbval = 255
@@ -286,16 +297,7 @@ while on:
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN:
-                if (event.key == K_w): #finger spin will replace
-                    #move selected news item up
-                    if selectednews <= len(newspaper) - 4 :
-                        selectednews += 1
-                if (event.key == K_s): #finger spin will replace
-                    #move selected news item down
-                    if selectednews >= 2 :
-                        selectednews -= 1
-                        
+                
         if flicktxt == 'EW': #gesture from east to west for news
             navigation = 'news'
             scroll = 0
@@ -305,6 +307,12 @@ while on:
                 urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
                 newsimg = pygame.image.load('newsimage.jpg')
 
+        if flicktxt == 'SN':
+            navigation = 'calendar'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
+            
         if doubletaptxt != '': #double tap to turn off
             on = False
 
@@ -364,13 +372,89 @@ while on:
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN:
-                if (event.key == K_w):#remove with addition of airwheel
-                    scroll -= 20
-                if (event.key == K_s):#remove with addition of airwheel
-                    scroll += 20
 
         if flicktxt == 'WE': #gesture from east to west for news
+            navigation = 'home'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
+
+    elif navigation == 'calendar':
+        
+        scale = 1
+        
+        #draw 24 background lines and times
+        for i in range(0,24):
+            #lines
+            hourline_position1 = [(w / 2) - (markerwidth / 2), calendar_buffer + (scale * i * 60)]
+            hourline_position2 = [hourline_position1[0] + markerwidth, hourline_position1[1]]
+            pygame.draw.line(screen, grey, hourline_position1, hourline_position2)
+
+            #labels
+            if i == 0 or i == 24:
+                hourtxt = '12:00 AM'
+            elif i == 12:
+                hourtxt = '12:00 PM'
+            elif i < 12:
+                hourtxt = str(i) + ':00 AM'
+            else:
+                hourtxt = str(i - 12) + ':00 PM'
+
+            hourlabel = textfont.render(hourtxt, True, grey)
+            hourlabel_w, hourlabel_h = hourlabel.get_rect().size
+            hourlabel_position = [hourline_position1[0] - hourlabel_w , hourline_position1[1] - (hourlabel_h / 2)]
+            screen.blit(hourlabel, hourlabel_position)
+            
+
+        #Create Rectangles and text for each event
+        for event in range(0, len(calendar) - 1):
+
+            #determine if events should be drawn
+            if calendar[event]['start'].day == datetime.datetime.now().day:
+                calendar[event]['draw'] = True
+            else:
+                calendar[event]['draw'] = False
+                
+            if calendar[event]['draw']:
+                
+                #end events at midnight if they don't already
+                if calendar[event]['end'].day != datetime.datetime.now().day:
+                    eoday = datetime.timedelta(hours = -calendar[event]['end'].hour, minutes = -calendar[event]['end'].minute - 1)
+                    calendar[event]['end'] += eoday
+
+                eventBlock_top = calendar_buffer + ((calendar[event]['start'].hour * 60 + calendar[event]['start'].minute) * scale)
+                eventBlock_bot = calendar_buffer + ((calendar[event]['end'].hour * 60 + calendar[event]['end'].minute) * scale)
+                eventBlock_h = eventBlock_bot - eventBlock_top
+                calendar[event]['rect'] = Rect((w / 2) - (eventBlock_w / 2), eventBlock_top, eventBlock_w, eventBlock_h)
+
+        #draw rectangles and text for each event
+        for eventBlock in range(0, len(calendar) - 1):
+                    
+            if calendar[eventBlock]['draw']:
+
+                #check for colliding rectangles
+                for eventBlock2 in range(eventBlock, len(calendar) - 1):
+                    if eventBlock != eventBlock2 and calendar[eventBlock2]['draw'] and calendar[eventBlock]['rect'].colliderect(calendar[eventBlock2]['rect']):
+
+                        calendar[eventBlock]['rect'].width /= 2
+                        calendar[eventBlock2]['rect'].width /= 2
+                        calendar[eventBlock2]['rect'].left = calendar[eventBlock]['rect'].right
+
+                eventlabel = textfont.render(calendar[eventBlock]['name'], True, black)
+                eventlabel_w, eventlabel_h = eventlabel.get_rect().size
+                eventlabel_position = [calendar[eventBlock]['rect'].left +  5,
+                                       calendar[eventBlock]['rect'].top + 5]
+                        
+                pygame.draw.rect(screen, white, calendar[eventBlock]['rect'].inflate(-2,-2))
+                screen.blit(eventlabel, eventlabel_position)
+            
+    
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+        if flicktxt == 'NS': #gesture from North to SOuth for Home
             navigation = 'home'
             scroll = 0
             airwheelint = 0

@@ -66,7 +66,7 @@ def get_calendar(credentials, calendar):
         calendar[event] = {}
         calendar[event]['name'] = events[event]['summary']
         calendar[event]['start'] = datetime.datetime.strptime(events[event]['start']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
-        calendar[event]['end'] = datetime.datetime.strptime(events[event]['start']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
+        calendar[event]['end'] = datetime.datetime.strptime(events[event]['end']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
 
         try:
             calendar[event]['description'] = events[event]['description']
