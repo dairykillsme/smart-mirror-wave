@@ -16,7 +16,7 @@ credentials = get_credentials()
 pygame.init()
 
 screen = pygame.display.set_mode()
-#pygame.display.toggle_fullscreen()
+pygame.display.toggle_fullscreen()
 pygame.display.set_caption('Smart Mirror V0.1')
 
 clock = pygame.time.Clock()
@@ -49,6 +49,8 @@ getweatherevent = pygame.event.Event(GETWEATHER)
 pygame.event.post(getweatherevent)
 
 weatherBasic('Burlington', 'VT', weather, hours)
+radarframes = weatherRadar('Burlington', 'VT')
+weatherHourly('Burlington', 'VT', weather, hours)
 pygame.time.set_timer(GETWEATHER, 300000)
 
 #set up Newspaper Data Gathering (startup only)
@@ -92,6 +94,7 @@ newsauthor_position = [0,0]
 navigation = 'home' #start on the homepage
 selectednews = 0
 selectedevent = 0
+selectedframe = 0
 scroll = 0
 
 #Gesture Pad
@@ -314,6 +317,14 @@ while on:
             scroll = 0
             airwheelint = 0
             flicktxt = ''
+            selectedevent = 0
+
+        if flicktxt == 'WE': #gesture from west to east
+            navigation = 'weather'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
+            selectedframe = 0
             
         if doubletaptxt != '': #double tap to turn off
             on = False
@@ -505,6 +516,40 @@ while on:
 
         if flicktxt == 'WE': #gesture from West to East for Calendar
             navigation = 'calendar'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
+
+    elif navigation == 'weather':
+
+        mapimage = pygame.image.load('basemap.png')
+        radarimage = pygame.image.load('radar' + str(selectedframe) + '.png')
+
+        mapimage_w, mapimage_h = mapimage.get_rect().size
+        mapimage_position = [(w / 2) - (mapimage_w / 2), 100]
+
+        screen.blit(mapimage, mapimage_position)
+        screen.blit(radarimage, mapimage_position)
+
+        #selecting weather
+        scroll = airwheelint / 100
+
+        if int(scroll) > radarframes - 1:
+            scroll = 0
+            airwheelint = 0
+        elif int(scroll) < 0:
+            scroll = radarframes -1
+            airwheelint = (radarframes - 1) * 100
+
+        selectedframe = int(scroll)
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+        if flicktxt == 'EW': #gesture from east to west
+            navigation = 'home'
             scroll = 0
             airwheelint = 0
             flicktxt = ''
