@@ -62,26 +62,35 @@ def get_calendar(credentials, calendar):
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
 
+    calendar = []
+
     for event in range(0, len(events) - 1):
-        calendar[event] = {}
-        calendar[event]['name'] = events[event]['summary']
-        calendar[event]['start'] = datetime.datetime.strptime(events[event]['start']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
-        calendar[event]['end'] = datetime.datetime.strptime(events[event]['end']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
+        start = datetime.datetime.strptime(events[event]['start']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
+        end = datetime.datetime.strptime(events[event]['end']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')
 
-        try:
-            calendar[event]['description'] = events[event]['description']
-        except:
-            calendar[event]['description'] = 'No Description Available'
+        if start.day == datetime.datetime.now().day:
+            
+            name = events[event]['summary']
 
-        try:
-            calendar[event]['location'] = events[event]['location']
-        except:
-            calendar[event]['location'] = 'No Location Available'
+            try:
+                description = events[event]['description']
+            except:
+                description = 'No Description Available'
+
+            try:
+                location = events[event]['location']
+            except:
+                location= 'No Location Available'
+
+            calendar.append({'name':name,
+                             'start':start,
+                             'end':end,
+                             'description':description,
+                             'location' : location})
 
 """
 USAGE:
-
-calendar = {}
+calendar = []
 credentials = get_credentials()
 get_calendar(credentials, calendar)
 print(calendar)

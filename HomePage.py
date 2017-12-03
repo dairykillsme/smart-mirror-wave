@@ -27,7 +27,7 @@ displaytime, displaydate, hours, minutes, meridiem = getDateTime()
 #declare data variables
 weather = {}
 newspaper = {}
-calendar = {}
+calendar = []
 date = ''
 time = ''
 
@@ -91,6 +91,7 @@ newsauthor_position = [0,0]
 #User input Variables
 navigation = 'home' #start on the homepage
 selectednews = 0
+selectedevent = 0
 scroll = 0
 
 #Gesture Pad
@@ -420,59 +421,65 @@ while on:
         screen.blit(nowlinelabel, nowlinelabel_position)
 
         #Create Rectangles and text for each event
-        for event in range(0, len(calendar) - 1):
+        for event in range(0, len(calendar)):
 
-            #determine if events should be drawn
-            if calendar[event]['start'].day == datetime.datetime.now().day:
-                calendar[event]['draw'] = True
-            else:
-                calendar[event]['draw'] = False
-                
-            if calendar[event]['draw']:
-                
-                #end events at midnight if they don't already
-                if calendar[event]['end'].day != datetime.datetime.now().day:
-                    eoday = datetime.timedelta(hours = -calendar[event]['end'].hour, minutes = -calendar[event]['end'].minute - 1)
-                    calendar[event]['end'] += eoday
+            #end events at midnight if they don't already
+            if calendar[event]['end'].day != datetime.datetime.now().day:
+                eoday = datetime.timedelta(hours = -calendar[event]['end'].hour, minutes = -calendar[event]['end'].minute - 1)
+                calendar[event]['end'] += eoday
 
-                eventBlock_top = calendar_buffer + ((calendar[event]['start'].hour * 60 + calendar[event]['start'].minute) * scale)
-                eventBlock_bot = calendar_buffer + ((calendar[event]['end'].hour * 60 + calendar[event]['end'].minute) * scale)
-                eventBlock_h = eventBlock_bot - eventBlock_top
-                calendar[event]['rect'] = Rect((w / 2) - (eventBlock_w / 2), eventBlock_top, eventBlock_w, eventBlock_h)
+            eventBlock_top = calendar_buffer + ((calendar[event]['start'].hour * 60 + calendar[event]['start'].minute) * scale)
+            eventBlock_bot = calendar_buffer + ((calendar[event]['end'].hour * 60 + calendar[event]['end'].minute) * scale)
+            eventBlock_h = eventBlock_bot - eventBlock_top
+            calendar[event]['rect'] = Rect((w / 2) - (eventBlock_w / 2), eventBlock_top, eventBlock_w, eventBlock_h)
 
         #draw rectangles and text for each event
-        for eventBlock in range(0, len(calendar) - 1):
-                    
-            if calendar[eventBlock]['draw']:
+        for eventBlock in range(0, len(calendar)):
 
-                #check for colliding rectangles
-                for eventBlock2 in range(eventBlock, len(calendar) - 1):
-                    if eventBlock != eventBlock2 and calendar[eventBlock2]['draw'] and calendar[eventBlock]['rect'].colliderect(calendar[eventBlock2]['rect']):
+            #check for colliding rectangles
+            for eventBlock2 in range(eventBlock, len(calendar)):
+                if eventBlock != eventBlock2 and calendar[eventBlock]['rect'].colliderect(calendar[eventBlock2]['rect']):
 
-                        calendar[eventBlock]['rect'].width /= 2
-                        calendar[eventBlock2]['rect'].width /= 2
-                        calendar[eventBlock2]['rect'].left = calendar[eventBlock]['rect'].right
+                    calendar[eventBlock]['rect'].width /= 2
+                    calendar[eventBlock2]['rect'].width /= 2
+                    calendar[eventBlock2]['rect'].left = calendar[eventBlock]['rect'].right
 
-                eventlabel = captionfont.render(calendar[eventBlock]['name'], True, black)
-                eventlabel_w, eventlabel_h = eventlabel.get_rect().size
-                eventlabel_position = [calendar[eventBlock]['rect'].left +  5,
-                                       calendar[eventBlock]['rect'].top]
-                
-                eventtime = textfont.render(calendar[eventBlock]['start'].strftime('%I:%M %p') + ' to ' + calendar[eventBlock]['end'].strftime('%I:%M %p'),
-                                            True,
-                                            dark_grey)
-                eventtime_w, eventtime_h = eventtime.get_rect().size
+            eventlabel = captionfont.render(calendar[eventBlock]['name'], True, black)
+            eventlabel_w, eventlabel_h = eventlabel.get_rect().size
+            eventlabel_position = [calendar[eventBlock]['rect'].left +  5,
+                                   calendar[eventBlock]['rect'].top]
+            
+            eventtime = textfont.render(calendar[eventBlock]['start'].strftime('%I:%M %p') + ' to ' + calendar[eventBlock]['end'].strftime('%I:%M %p'),
+                                        True,
+                                        dark_grey)
+            eventtime_w, eventtime_h = eventtime.get_rect().size
 
-                if eventlabel_h + eventtime_h <= calendar[eventBlock]['rect'].height + 10:
-                    eventtime_position = [eventlabel_position[0],
-                                          eventlabel_position[1] + eventlabel_h]
-                else:
-                    eventtime_position = [eventlabel_position[0] + eventlabel_w + 10,
-                                          calendar[eventBlock]['rect'].bottom - eventtime_h]
-                        
-                pygame.draw.rect(screen, white, calendar[eventBlock]['rect'].inflate(-2,-2))
-                screen.blit(eventlabel, eventlabel_position)
-                screen.blit(eventtime, eventtime_position)
+            if eventlabel_h + eventtime_h <= calendar[eventBlock]['rect'].height + 10:
+                eventtime_position = [eventlabel_position[0],
+                                      eventlabel_position[1] + eventlabel_h]
+            else:
+                eventtime_position = [eventlabel_position[0] + eventlabel_w + 10,
+                                      calendar[eventBlock]['rect'].bottom - eventtime_h]
+
+            if selectedevent == eventBlock:
+                pygame.draw.rect(screen, white, calendar[eventBlock]['rect'].inflate(-1,-1))
+            else:
+                pygame.draw.rect(screen, grey, calendar[eventBlock]['rect'].inflate(-2,-2))
+
+            screen.blit(eventlabel, eventlabel_position)
+            screen.blit(eventtime, eventtime_position)
+
+        #selecting event
+        scroll = airwheelint / 360
+
+        if int(scroll) > len(calendar):
+            scroll = 0
+            airwheelint = 0
+        elif int(scroll) < 0:
+            scroll = len(calendar)
+            airwheelint = len(calendar) * 360
+
+        selectedevent = int(scroll)
 
     
         for event in pygame.event.get():
@@ -482,6 +489,22 @@ while on:
 
         if flicktxt == 'WE': #gesture from West to East for Home
             navigation = 'home'
+            scroll = 0
+            airwheelint = 0
+            flicktxt = ''
+
+        if flicktxt == 'EW': #gesture from east to west for further event data
+            if len(calendar) > 0:
+                navigation = 'event'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+
+    elif navigation == 'event':
+        print(calendar[selectedevent])
+
+        if flicktxt == 'WE': #gesture from West to East for Calendar
+            navigation = 'calendar'
             scroll = 0
             airwheelint = 0
             flicktxt = ''
