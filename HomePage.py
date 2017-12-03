@@ -62,6 +62,7 @@ black = 0,0,0
 white = 255,255,255
 grey = 190,190,190
 dark_grey = 130,130,130
+red = 195,0,0
 
 #Set up Fonts
 numberfont = pygame.font.Font('timeburnernormal.ttf', 100)
@@ -146,7 +147,7 @@ newslabel_w, newslabel_h = newslabel.get_rect().size
 get_calendar(credentials,calendar)
 calendar_buffer = 50
 markerwidth = 700
-eventBlock_w = 600
+eventBlock_w = 650
 
 #formatting
 def wraptext(text, font, width):
@@ -298,7 +299,7 @@ while on:
                 pygame.quit()
                 sys.exit()
                 
-        if flicktxt == 'EW': #gesture from east to west for news
+        if flicktxt == 'SN': #gesture from South to north
             navigation = 'news'
             scroll = 0
             airwheelint = 0
@@ -307,7 +308,7 @@ while on:
                 urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
                 newsimg = pygame.image.load('newsimage.jpg')
 
-        if flicktxt == 'SN':
+        if flicktxt == 'EW': #gesture from east to west
             navigation = 'calendar'
             scroll = 0
             airwheelint = 0
@@ -335,7 +336,7 @@ while on:
                 newstitle_position = [newstitle_position[0], newstitle_h + newstitle_position[1]]
                 screen.blit(newstitle, newstitle_position)
             except:
-                print("dummy machine broke")
+                print("Unicode Error Unprintable character Found in News")
 
         #Draw image if one exists
         if newspaper[selectednews]['image'] != 'NULL':
@@ -373,7 +374,7 @@ while on:
                 pygame.quit()
                 sys.exit()
 
-        if flicktxt == 'WE': #gesture from east to west for news
+        if flicktxt == 'NS': #gesture from north to south
             navigation = 'home'
             scroll = 0
             airwheelint = 0
@@ -381,7 +382,7 @@ while on:
 
     elif navigation == 'calendar':
         
-        scale = 1
+        scale = 1.1
         
         #draw 24 background lines and times
         for i in range(0,24):
@@ -404,7 +405,19 @@ while on:
             hourlabel_w, hourlabel_h = hourlabel.get_rect().size
             hourlabel_position = [hourline_position1[0] - hourlabel_w , hourline_position1[1] - (hourlabel_h / 2)]
             screen.blit(hourlabel, hourlabel_position)
-            
+
+        #red now line
+        nowline_position1 = [(w / 2) - (markerwidth / 2),
+                             calendar_buffer + ((datetime.datetime.now().hour * 60) + datetime.datetime.now().minute) * scale]
+        nowline_position2 = [nowline_position1[0] + markerwidth,
+                             nowline_position1[1]]
+        pygame.draw.line(screen, red, nowline_position1, nowline_position2)
+
+        nowlinelabel = textfont.render(datetime.datetime.now().strftime('%I:%M %p'), True, red)
+        nowlinelabel_w, nowlinelabel_h = nowlinelabel.get_rect().size
+        nowlinelabel_position = [nowline_position2[0] + 5,
+                                 nowline_position2[1] - (nowlinelabel_h / 2)]
+        screen.blit(nowlinelabel, nowlinelabel_position)
 
         #Create Rectangles and text for each event
         for event in range(0, len(calendar) - 1):
@@ -440,21 +453,34 @@ while on:
                         calendar[eventBlock2]['rect'].width /= 2
                         calendar[eventBlock2]['rect'].left = calendar[eventBlock]['rect'].right
 
-                eventlabel = textfont.render(calendar[eventBlock]['name'], True, black)
+                eventlabel = captionfont.render(calendar[eventBlock]['name'], True, black)
                 eventlabel_w, eventlabel_h = eventlabel.get_rect().size
                 eventlabel_position = [calendar[eventBlock]['rect'].left +  5,
-                                       calendar[eventBlock]['rect'].top + 5]
+                                       calendar[eventBlock]['rect'].top]
+                
+                eventtime = textfont.render(calendar[eventBlock]['start'].strftime('%I:%M %p') + ' to ' + calendar[eventBlock]['end'].strftime('%I:%M %p'),
+                                            True,
+                                            dark_grey)
+                eventtime_w, eventtime_h = eventtime.get_rect().size
+
+                if eventlabel_h + eventtime_h <= calendar[eventBlock]['rect'].height + 10:
+                    eventtime_position = [eventlabel_position[0],
+                                          eventlabel_position[1] + eventlabel_h]
+                else:
+                    eventtime_position = [eventlabel_position[0] + eventlabel_w + 10,
+                                          calendar[eventBlock]['rect'].bottom - eventtime_h]
                         
                 pygame.draw.rect(screen, white, calendar[eventBlock]['rect'].inflate(-2,-2))
                 screen.blit(eventlabel, eventlabel_position)
-            
+                screen.blit(eventtime, eventtime_position)
+
     
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
 
-        if flicktxt == 'NS': #gesture from North to SOuth for Home
+        if flicktxt == 'WE': #gesture from West to East for Home
             navigation = 'home'
             scroll = 0
             airwheelint = 0
