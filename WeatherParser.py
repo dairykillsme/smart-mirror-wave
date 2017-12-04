@@ -3,7 +3,7 @@ import json
 from PIL import Image
 
 #this file is for scraping weather data fromi Weather Underground
-def weatherBasic( city, state, weather, hours ):
+def weatherBasic( city, state, weather, hours):
     #Get Page WEATHER UNDERGROUND KEY = d1fec7897078849e
     url = 'http://api.wunderground.com/api/d1fec7897078849e/conditions/q/' + state + '/' + city + '.json'
     page = urllib.request.urlopen(url)

@@ -56,13 +56,11 @@ def get_calendar(credentials, calendar):
 
     today = datetime.datetime.now().strftime('%Y-%m-%dT00:00:00-04:00')# '-04:00' indicates timezone
     
-    print('Getting the upcoming 20 events')
+    print('Getting the upcoming 15 events')
     eventsResult = service.events().list(
         calendarId='primary', timeMin=today, maxResults=15, singleEvents=True,
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
-
-    calendar = []
 
     for event in range(0, len(events) - 1):
         start = datetime.datetime.strptime(events[event]['start']['dateTime'][:19], '%Y-%m-%dT%H:%M:%S')

@@ -27,7 +27,7 @@ displaytime, displaydate, hours, minutes, meridiem = getDateTime()
 #declare data variables
 weather = {}
 newspaper = {}
-calendar = []
+calendar = list()
 date = ''
 time = ''
 
@@ -47,6 +47,7 @@ weathericons = {'clear':'clear.png',
 GETWEATHER = USEREVENT + 1
 getweatherevent = pygame.event.Event(GETWEATHER)
 pygame.event.post(getweatherevent)
+
 
 weatherBasic('Burlington', 'VT', weather, hours)
 radarframes = weatherRadar('Burlington', 'VT')
@@ -298,6 +299,7 @@ while on:
         #event listner
         for event in pygame.event.get():
             if event.type == GETWEATHER:
+                print('Fetching Weather')
                 weatherBasic('Burlington', 'VT', weather, hours)
             if event.type == QUIT:
                 pygame.quit()
