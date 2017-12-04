@@ -19,6 +19,8 @@ screen = pygame.display.set_mode()
 pygame.display.toggle_fullscreen()
 pygame.display.set_caption('Smart Mirror V0.1')
 
+pygame.mouse.set_visible(False)
+
 clock = pygame.time.Clock()
 
 #time and date set up
@@ -65,7 +67,7 @@ black = 0,0,0
 white = 255,255,255
 grey = 190,190,190
 dark_grey = 130,130,130
-red = 195,0,0
+red = 230,0,0
 
 #Set up Fonts
 numberfont = pygame.font.Font('timeburnernormal.ttf', 100)
@@ -198,6 +200,7 @@ while on:
     
     if datetime.datetime.now().hour == 0 and datetime.datetime.now().minute == 0:
         get_calendar(credentials,calendar)
+        weatherHourly('Burlington', 'VT', weather, hours)
     
     #get time
     displaytime, displaydate, hours, minutes, meridiem = getDateTime()
@@ -341,7 +344,6 @@ while on:
             #weather page setup
             selectedframe = 0
             radarframes = weatherRadar('Burlington', 'VT')
-            weatherHourly('Burlington', 'VT', weather, hours)
             
         if doubletaptxt != '': #double tap to turn off
             on = False
@@ -391,7 +393,7 @@ while on:
                 newsbody_position = [newsbody_position[0], newsbody_h + newsbody_position[1]]
                 screen.blit(newsbody, newsbody_position)
 
-                if newsbody_w < 700:
+                if newsbody_w < 600:
                     newsbody_position[1] += newsbody_h
             except:
                 print('you suckxd')

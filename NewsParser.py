@@ -3,6 +3,30 @@ import json
 import time
 
 def newsBasic(newspaper):
+    phrases = ["Newsletter Sign Up",
+               "Continue reading the main story",
+               "Sign Up for the Opinion Today Newsletter Every weekday, get thought-provoking commentary from Op-Ed columnists, the Times editorial board and contributing writers from around the world.",
+               "Please verify you're not a robot by clicking the box",
+               "Invalid email address. Please re-enter.",
+               "You must select a newsletter to subscribe to.",
+               "Sign Up You agree to receive occasional updates and special offers for The New York Times's products and services. Thank you for subscribing.",
+               "An Error has occurred.",
+               "Please try again later.",
+               "You are already subscribed to this email.",
+               "View all New York Times newsletters.",
+               "See Sample",
+               "Manage Email Preferences",
+               "Not you?",
+               "Privacy Policy Opt out or contact us anytime",
+               "Advertisement",
+               "Photo",
+               "Photo.",
+               "Advertisement",
+               "An error has occurred.",
+               "We're interested in your feedback on this page. Tell us what you think",
+               "What's Next Loading... Go to Home Page >>",
+               "Opt out or contact us anytime"]
+    
     #Get 1 day ago
     today = int(time.time() * 1000)
     day = 86400000 * 2
@@ -24,6 +48,9 @@ def newsBasic(newspaper):
         newspaper[article]['title'] = parsed_json['posts'][article]['title']
         newspaper[article]['author'] = parsed_json['posts'][article]['author']
         newspaper[article]['body'] = parsed_json['posts'][article]['text']
+
+        for phrase in phrases:
+            newspaper[article]['body'] = newspaper[article]['body'].replace(phrase, '')
 
         try:
             newspaper[article]['image'] = parsed_json['posts'][article]['thread']['main_image']
