@@ -52,7 +52,7 @@ pygame.event.post(getweatherevent)
 weatherBasic('Burlington', 'VT', weather, hours)
 radarframes = weatherRadar('Burlington', 'VT')
 weatherHourly('Burlington', 'VT', weather, hours)
-pygame.time.set_timer(GETWEATHER, 300000)
+pygame.time.set_timer(GETWEATHER, 345600)
 
 #set up Newspaper Data Gathering (startup only)
 newsBasic(newspaper)
@@ -148,6 +148,11 @@ def touch(position):
 newslabel = titlefont.render('Headlines', True, white, black)
 newslabel_w, newslabel_h = newslabel.get_rect().size
 
+#set up news page data gathering
+GETNEWS = USEREVENT + 2
+getnewsevent = pygame.event.Event(GETNEWS)
+pygame.event.post(getnewsevent)
+pygame.time.set_timer(GETNEWS, 5760000)
 #CALENDAR PAGE
 get_calendar(credentials,calendar)
 calendar_buffer = 50
@@ -190,6 +195,10 @@ def wraptext(text, font, width):
     return wrapped_lines
 
 while on:
+    
+    if datetime.datetime.now().hour == 0 and datetime.datetime.now().minute == 0:
+        get_calendar(credentials,calendar)
+    
     #get time
     displaytime, displaydate, hours, minutes, meridiem = getDateTime()
 
@@ -301,6 +310,9 @@ while on:
             if event.type == GETWEATHER:
                 print('Fetching Weather')
                 weatherBasic('Burlington', 'VT', weather, hours)
+            if event.type == GETNEWS:
+                print('Fetching News')
+                newsBasic(newspaper)
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
@@ -326,7 +338,10 @@ while on:
             scroll = 0
             airwheelint = 0
             flicktxt = ''
+            #weather page setup
             selectedframe = 0
+            radarframes = weatherRadar('Burlington', 'VT')
+            weatherHourly('Burlington', 'VT', weather, hours)
             
         if doubletaptxt != '': #double tap to turn off
             on = False
