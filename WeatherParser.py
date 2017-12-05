@@ -91,6 +91,8 @@ def weatherHourly( city, state, weather, hours):
             else:
                 weather['hourly'][hour]['icon_to_use']  = 'nt_partlycloudy'
 
+        
+
     page.close()
 
     return
@@ -124,6 +126,7 @@ def weatherRadar(city, state):
     urllib.request.urlretrieve(basemapuri, 'basemap.png')
 
     return frames
+
     
 
     

@@ -16,7 +16,7 @@ credentials = get_credentials()
 pygame.init()
 
 screen = pygame.display.set_mode()
-pygame.display.toggle_fullscreen()
+#pygame.display.toggle_fullscreen()
 pygame.display.set_caption('Smart Mirror V0.1')
 
 pygame.mouse.set_visible(False)
@@ -155,11 +155,16 @@ GETNEWS = USEREVENT + 2
 getnewsevent = pygame.event.Event(GETNEWS)
 pygame.event.post(getnewsevent)
 pygame.time.set_timer(GETNEWS, 5760000)
+
 #CALENDAR PAGE
 get_calendar(credentials,calendar)
 calendar_buffer = 50
 markerwidth = 700
 eventBlock_w = 650
+
+#WEATHER PAGE
+hourly_top = 950
+hourly_scale = 20
 
 #formatting
 def wraptext(text, font, width):
@@ -199,8 +204,8 @@ def wraptext(text, font, width):
 while on:
     
     if datetime.datetime.now().hour == 0 and datetime.datetime.now().minute == 0:
+        calendar = []
         get_calendar(credentials,calendar)
-        weatherHourly('Burlington', 'VT', weather, hours)
     
     #get time
     displaytime, displaydate, hours, minutes, meridiem = getDateTime()
@@ -343,6 +348,7 @@ while on:
             flicktxt = ''
             #weather page setup
             selectedframe = 0
+            weatherHourly('Burlington', 'VT', weather, hours)
             radarframes = weatherRadar('Burlington', 'VT')
             
         if doubletaptxt != '': #double tap to turn off
@@ -529,9 +535,36 @@ while on:
                 scroll = 0
                 airwheelint = 0
                 flicktxt = ''
+                weatherHourly('Burlington', 'VT', weather, hours)
 
     elif navigation == 'event':
-        print(calendar[selectedevent])
+        #is this event in the future?
+        if calendar[selectedevent]['start'] > datetime.datetime.now():
+            timeuntil_time = calendar[selectedevent]['start'] - datetime.datetime.now()
+            timeuntil_txt = 'Starts in ' + str(int(timeuntil_time.seconds / (60 * 60))) + ' Hours ' + str(int(timeuntil_time.seconds / 60) % 60) + ' Minutes'
+            timeuntil_color = red
+            
+        else:
+            timeuntil_txt = 'This Event Already Happened'
+            timeuntil_color = grey
+
+        timeuntil = datefont.render(timeuntil_txt, True, timeuntil_color)
+        timeuntil_w, timeuntil_h = timeuntil.get_rect().size
+        timeuntil_position = [ w - timeuntil_w - 50, 50 ]
+        screen.blit(timeuntil, timeuntil_position)
+
+        eventtitle = titlefont.render(calendar[selectedevent]['name'], True, white)
+        eventtitle_w, eventtitle_h = eventtitle.get_rect().size
+        eventtitle_position = [ 50, timeuntil_position[1] + timeuntil_h]
+        screen.blit(eventtitle, eventtitle_position)
+
+        start2end_txt = calendar[selectedevent]['start'].strftime('%H:%M %p') + ' - ' + calendar[selectedevent]['end'].strftime('%H:%M %p')
+        start2end = datefont.render(start2end_txt, True, grey)
+        start2end_w, start2end_h = start2end.get_rect().size
+        start2end_position = [50, eventtitle_position[1] + eventtitle_h]
+        screen.blit(start2end, start2end_position)
+
+        
 
         if flicktxt == 'WE': #gesture from West to East for Calendar
             navigation = 'calendar'
@@ -541,6 +574,7 @@ while on:
 
     elif navigation == 'weather':
 
+        #radar drawing
         mapimage = pygame.image.load('basemap.png')
         radarimage = pygame.image.load('radar' + str(selectedframe) + '.png')
 
@@ -550,7 +584,19 @@ while on:
         screen.blit(mapimage, mapimage_position)
         screen.blit(radarimage, mapimage_position)
 
-        #selecting weather
+        #hourly forecast drawing
+        for hour in range(0, len(weather['hourly']) - 1):
+
+            hourimage_lg = pygame.image.load(weathericons[weather['hourly'][hour]['icon_to_use']])
+            hourimage_lg_w, hourimage_lg_h = hourimage_lg.get_rect().size
+
+            hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 10), int(hourimage_lg_h / 10)))
+            hourimage_h, hourimage_w = hourimage.get_rect().size
+            hourimage_position = [0, hourly_top + (hourly_scale * hour)]
+
+            screen.blit(hourimage, hourimage_position)
+
+        #selecting radar frame
         scroll = airwheelint / 100
 
         if int(scroll) > radarframes - 1:
