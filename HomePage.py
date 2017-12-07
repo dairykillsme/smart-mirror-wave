@@ -52,8 +52,6 @@ pygame.event.post(getweatherevent)
 
 
 weatherBasic('Burlington', 'VT', weather, hours)
-radarframes = weatherRadar('Burlington', 'VT')
-weatherHourly('Burlington', 'VT', weather, hours)
 pygame.time.set_timer(GETWEATHER, 345600)
 
 #set up Newspaper Data Gathering (startup only)
@@ -67,7 +65,7 @@ black = 0,0,0
 white = 255,255,255
 grey = 190,190,190
 dark_grey = 130,130,130
-red = 230,0,0
+red = 255,0,0
 
 #Set up Fonts
 numberfont = pygame.font.Font('timeburnernormal.ttf', 100)
@@ -163,8 +161,8 @@ markerwidth = 700
 eventBlock_w = 650
 
 #WEATHER PAGE
-hourly_top = 950
-hourly_scale = 20
+hourly_top = 1050
+hourly_scale = 65
 
 #formatting
 def wraptext(text, font, width):
@@ -320,6 +318,7 @@ while on:
                 weatherBasic('Burlington', 'VT', weather, hours)
             if event.type == GETNEWS:
                 print('Fetching News')
+                newspaper = {}
                 newsBasic(newspaper)
             if event.type == QUIT:
                 pygame.quit()
@@ -334,6 +333,10 @@ while on:
                 urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
                 newsimg = pygame.image.load('newsimage.jpg')
 
+            wrappedtitle = wraptext(newspaper[selectednews]['title'], titlefont, 900)
+            wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 800)
+            
+
         if flicktxt == 'EW': #gesture from east to west
             navigation = 'calendar'
             scroll = 0
@@ -346,11 +349,21 @@ while on:
             scroll = 0
             airwheelint = 0
             flicktxt = ''
+
+            #loading screen
+            screen.fill(black)
+            
+            loadingWeather = titlefont.render('Getting Your Weather', True, white)
+            loadingWeather_w, loadingWeather_h = loadingWeather.get_rect().size
+            loadingWeather_position = [(w / 2) - (loadingWeather_w / 2),
+                                       (h / 2) - (loadingWeather_h / 2)]
+            screen.blit(loadingWeather, loadingWeather_position)
+            pygame.display.update()
             #weather page setup
             selectedframe = 0
             weatherHourly('Burlington', 'VT', weather, hours)
             radarframes = weatherRadar('Burlington', 'VT')
-            
+
         if doubletaptxt != '': #double tap to turn off
             on = False
 
@@ -358,17 +371,14 @@ while on:
     elif navigation == 'news':
 
         #TITLE (Text Wrapped, scrolled)
-        wrappedtext = wraptext(newspaper[selectednews]['title'], titlefont, 900)
-
-
-        newstitle = titlefont.render(wrappedtext[0], True, white, black)
+        newstitle = titlefont.render(wrappedtitle[0], True, white, black)
         newstitle_w, newstitle_h = newstitle.get_rect().size
         newstitle_position = [(w / 2) - (newstitle_w / 2), scroll + newstitle_h]
         screen.blit(newstitle, newstitle_position)
             
-        for line in range(1, len(wrappedtext)):
+        for line in range(1, len(wrappedtitle)):
             try:
-                newstitle = titlefont.render(wrappedtext[line], True, white, black)
+                newstitle = titlefont.render(wrappedtitle[line], True, white, black)
                 newstitle_w, newstitle_h = newstitle.get_rect().size
                 newstitle_position = [newstitle_position[0], newstitle_h + newstitle_position[1]]
                 screen.blit(newstitle, newstitle_position)
@@ -383,9 +393,6 @@ while on:
         else:
             newsimg_position = [0, newstitle_h + newstitle_position[1]]
             newsimg_h = 0
-            
-    
-        wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 800)
 
         newsbody = textfont.render(wrappedtext[0].lstrip(), True, white, black)
         newsbody_w, newsbody_h = newsbody.get_rect().size
@@ -416,7 +423,8 @@ while on:
             scroll = 0
             airwheelint = 0
             flicktxt = ''
-
+            
+    #CALENDAR PAGE
     elif navigation == 'calendar':
         
         scale = 1.1
@@ -536,6 +544,8 @@ while on:
                 airwheelint = 0
                 flicktxt = ''
                 weatherHourly('Burlington', 'VT', weather, hours)
+                wrappedtext = wraptext(calendar[selectedevent]['description'], captionfont, 800)
+                
 
     elif navigation == 'event':
         #is this event in the future?
@@ -548,23 +558,32 @@ while on:
             timeuntil_txt = 'This Event Already Happened'
             timeuntil_color = grey
 
-        timeuntil = datefont.render(timeuntil_txt, True, timeuntil_color)
+        timeuntil = datefont.render(timeuntil_txt, True, timeuntil_color, black)
         timeuntil_w, timeuntil_h = timeuntil.get_rect().size
         timeuntil_position = [ w - timeuntil_w - 50, 50 ]
         screen.blit(timeuntil, timeuntil_position)
 
-        eventtitle = titlefont.render(calendar[selectedevent]['name'], True, white)
+        eventtitle = titlefont.render(calendar[selectedevent]['name'], True, white, black)
         eventtitle_w, eventtitle_h = eventtitle.get_rect().size
         eventtitle_position = [ 50, timeuntil_position[1] + timeuntil_h]
         screen.blit(eventtitle, eventtitle_position)
 
-        start2end_txt = calendar[selectedevent]['start'].strftime('%H:%M %p') + ' - ' + calendar[selectedevent]['end'].strftime('%H:%M %p')
-        start2end = datefont.render(start2end_txt, True, grey)
+        start2end_txt = calendar[selectedevent]['start'].strftime('%I:%M %p') + ' - ' + calendar[selectedevent]['end'].strftime('%I:%M %p')
+        start2end = datefont.render(start2end_txt, True, white)
         start2end_w, start2end_h = start2end.get_rect().size
         start2end_position = [50, eventtitle_position[1] + eventtitle_h]
         screen.blit(start2end, start2end_position)
 
-        
+        location = datefont.render(calendar[selectedevent]['location'], True, white, black)
+        location_w, location_h = location.get_rect().size
+        location_position = [50, start2end_position[1] + start2end_h]
+        screen.blit(location, location_position)
+
+        for line in range(0, len(wrappedtext)):
+            description = captionfont.render(wrappedtext[line], True, white, black)
+            description_w, description_h = description.get_rect().size
+            description_position = [50, location_position[1] + 2 * location_h + (line * description_h)]
+            screen.blit(description, description_position)
 
         if flicktxt == 'WE': #gesture from West to East for Calendar
             navigation = 'calendar'
@@ -585,16 +604,34 @@ while on:
         screen.blit(radarimage, mapimage_position)
 
         #hourly forecast drawing
-        for hour in range(0, len(weather['hourly']) - 1):
+        for hour in range(0, 10):
 
             hourimage_lg = pygame.image.load(weathericons[weather['hourly'][hour]['icon_to_use']])
             hourimage_lg_w, hourimage_lg_h = hourimage_lg.get_rect().size
 
-            hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 10), int(hourimage_lg_h / 10)))
+            hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 4), int(hourimage_lg_h / 4)))
             hourimage_h, hourimage_w = hourimage.get_rect().size
-            hourimage_position = [0, hourly_top + (hourly_scale * hour)]
+            hourimage_position = [mapimage_position[0], hourly_top + (hourly_scale * hour)]
 
             screen.blit(hourimage, hourimage_position)
+
+            hourtime = captionfont.render(weather['hourly'][hour]['time'], True, white, black)
+            hourtime_w, hourtime_h = hourtime.get_rect().size
+            hourtime_position = [hourimage_position[0] + 125,
+                                 hourimage_position[1] + (hourimage_h / 2) - (hourimage_h / 2)]
+            screen.blit(hourtime, hourtime_position)
+
+            hourtemp = captionfont.render(weather['hourly'][hour]['temperature'] + '°F,  Feels Like ' + weather['hourly'][hour]['real_feel'] + '°F', True, white)
+            hourtemp_w, hourtemp_h = hourtemp.get_rect().size
+            hourtemp_position = [hourtime_position[0] + 130,
+                                 hourtime_position[1]]
+            screen.blit(hourtemp, hourtemp_position)
+
+            hourrain = captionfont.render(weather['hourly'][hour]['chance_rain'] + '% Chance Percipitation', True, white, black)
+            hourrain_w, hourrain_h = hourrain.get_rect().size
+            hourrain_position = [mapimage_position[0] + mapimage_w - hourrain_w,
+                                 hourtime_position[1]]
+            screen.blit(hourrain, hourrain_position)
 
         #selecting radar frame
         scroll = airwheelint / 100
