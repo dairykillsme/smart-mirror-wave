@@ -49,16 +49,12 @@ weathericons = {'clear':'clear.png',
 GETWEATHER = USEREVENT + 1
 getweatherevent = pygame.event.Event(GETWEATHER)
 pygame.event.post(getweatherevent)
-
-
-weatherBasic('Burlington', 'VT', weather, hours)
 pygame.time.set_timer(GETWEATHER, 345600)
-
-#set up Newspaper Data Gathering (startup only)
-newsBasic(newspaper)
 
 #on off variable
 on = True
+startup = True
+idle = True
 
 #declare colors
 black = 0,0,0
@@ -155,7 +151,6 @@ pygame.event.post(getnewsevent)
 pygame.time.set_timer(GETNEWS, 5760000)
 
 #CALENDAR PAGE
-get_calendar(credentials,calendar)
 calendar_buffer = 50
 markerwidth = 700
 eventBlock_w = 650
@@ -199,403 +194,513 @@ def wraptext(text, font, width):
             wrapped_lines.append(line)
     return wrapped_lines
 
-while on:
+while idle:
     
-    if datetime.datetime.now().hour == 0 and datetime.datetime.now().minute == 0:
-        calendar = []
-        get_calendar(credentials,calendar)
-    
-    #get time
-    displaytime, displaydate, hours, minutes, meridiem = getDateTime()
-
-    #get display info
-    w, h = pygame.display.get_surface().get_size()
-
-    #Reset Background
     screen.fill(black)
+    pygame.display.update()
 
-    #HOME PAGE
-    if navigation == 'home':
-        
-        #WEATHER BLOCK
-        #set up elements
-        weatherimg = pygame.image.load(weathericons[weather['icon_to_use']])
-        basictemp = numberfont.render(str(int(weather['current_temp'])) + '°F', True, white, black)
-        basictempcaption = captionfont.render('Current', True, white, black)
-        basictempcaption = pygame.transform.rotate(basictempcaption, 270)
-        basicfeelslike = numberfont.render(str(int(float(weather['current_realfeel']))) + '°F', True, white, black)
-        feelslikecaption = captionfont.render('Feels Like', True, white, black)
-        feelslikecaption = pygame.transform.rotate(feelslikecaption, 270)
+    if doubletaptxt != '':
+        startup = True
+        on = True
+        doubletaptxt = ''
+        flicktxt = ''
+        airwheelint = 0
 
-        #get elements sizes
-        weatherimg_w, weatherimg_h = weatherimg.get_rect().size
-        basictemp_w,basictemp_h = basictemp.get_rect().size
-        basicfeelslike_w,basicfeelslike_h = basicfeelslike.get_rect().size
+    if flicktxt == 'NS':
+        idle = False
 
-        #positionelements relative to weatherimg 
-        basictemp_position = [weatherimg_position[0] + (weatherimg_w / 2) - (basictemp_w / 2), weatherimg_h + weatherimg_position[1] + 15]
-        basictempcaption_position = [basictemp_w + basictemp_position[0], weatherimg_h + weatherimg_position[1] + 25]
-        basicfeelslike_position = [weatherimg_position[0] + (weatherimg_w / 2) - (basictemp_w / 2), basictemp_position[1] + basictemp_h]
-        feelslikecaption_position = [basicfeelslike_w + basicfeelslike_position[0], basictemp_h + basictemp_position[1]]
+    if startup:
+        w, h = pygame.display.get_surface().get_size()
+        calendar = []
+        newspaper = {}
+        weather = {}
 
-        #draw objects
-        screen.blit(weatherimg, weatherimg_position)
-        screen.blit(basictemp, basictemp_position)
-        screen.blit(basictempcaption, basictempcaption_position)
-        screen.blit(basicfeelslike, basicfeelslike_position)
-        screen.blit(feelslikecaption, feelslikecaption_position)
-
-
-        #TIMEDATE BLOCK
-        #set up elements
-        timeblock = timefont.render(displaytime, True, white, black)
-        dateblock = datefont.render(displaydate, True, white, black)
-
-        #get element sizes
-        timeblock_w, timeblock_h = timeblock.get_rect().size
-        dateblock_w, dateblock_h = dateblock.get_rect().size
-
-        #position relative to time and right side of screen
-        timeblock_position = [w - timeblock_w - 30, 30]
-        dateblock_position = [w - dateblock_w - 30, timeblock_h]
-
-        #draw elements
-        screen.blit(timeblock, timeblock_position)
-        screen.blit(dateblock, dateblock_position)
-
-        #NEWS BLOCK
-        #block of visible news
-        visiblenews = Rect(0, h - 400, w, 300)
-        
-        #news label
-        newslabel_position = [(w / 2) - (newslabel_w / 2), visiblenews.top - newslabel_h]
-        screen.blit(newslabel, newslabel_position)
-        
-        #news headlines
-        for article in range (0, len(newspaper) - 1):
-
-            newsitem = textfont.render(newspaper[article]['title'], True, white, black)
-            newsitem_w, newsitem_h = newsitem.get_rect().size
-            newsitem_position = [(w / 2) - (newsitem_w / 2), scroll + (h / 2) + (article * newsitem_h)]
-
-            #check if news item is in visible news box
-            if newsitem_position[1] < visiblenews.bottom and newsitem_position[1] > visiblenews.top:
-
-                #check if center of visible box is inside news item and selected item if true
-                if visiblenews.top + visiblenews.height / 2 > newsitem_position[1] and visiblenews.top + visiblenews.height / 2 < newsitem_position[1] + newsitem_h:
-                    selectednews = article
-                #check if center of visible box is below bottom of news item
-                elif visiblenews.top + visiblenews.height / 2 > newsitem_position[1] + newsitem_h:
-                    rgbval = 220 * (newsitem_position[1] - visiblenews.top) / (visiblenews.height / 2)
-                    
-                    if rgbval > 255:
-                        rgbval = 255
-                    elif rgbval < 0:
-                        rgbval = 0
-                        
-                    color = (rgbval, rgbval, rgbval)
-                    newsitem = textfont.render(newspaper[article]['title'], True, color, black)
-                else:
-                    rgbval = 220 * (visiblenews.bottom - newsitem_position[1]) / (visiblenews.height / 2)
-                    
-                    if rgbval > 255:
-                        rgbval = 255
-                    elif rgbval < 0:
-                        rgbval = 0
-                        
-                    color = (rgbval, rgbval, rgbval)
-                    newsitem = textfont.render(newspaper[article]['title'], True, color, black)
+        screen.fill(black)
                 
-                screen.blit(newsitem, newsitem_position)
+        loading = titlefont.render('Fetching Calendar', True, white)
+        loading_w, loading_h = loading.get_rect().size
+        loading_position = [(w / 2) - (loading_w / 2),
+                                   (h / 2) - (loading_h / 2)]
+        screen.blit(loading, loading_position)
+        pygame.display.update()
+        
+        get_calendar(credentials,calendar)
 
-
-        scroll = - airwheelint / 20
-
-        #event listner
-        for event in pygame.event.get():
-            if event.type == GETWEATHER:
-                print('Fetching Weather')
-                weatherBasic('Burlington', 'VT', weather, hours)
-            if event.type == GETNEWS:
-                print('Fetching News')
-                newspaper = {}
-                newsBasic(newspaper)
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+        screen.fill(black)
                 
-        if flicktxt == 'SN': #gesture from South to north
-            navigation = 'news'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
-            if newspaper[selectednews]['image'] != 'NULL':
-                urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
-                newsimg = pygame.image.load('newsimage.jpg')
-
-            wrappedtitle = wraptext(newspaper[selectednews]['title'], titlefont, 900)
-            wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 800)
-            
-
-        if flicktxt == 'EW': #gesture from east to west
-            navigation = 'calendar'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
-            selectedevent = 0
-
-        if flicktxt == 'WE': #gesture from west to east
-            navigation = 'weather'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
-
-            #loading screen
-            screen.fill(black)
-            
-            loadingWeather = titlefont.render('Getting Your Weather', True, white)
-            loadingWeather_w, loadingWeather_h = loadingWeather.get_rect().size
-            loadingWeather_position = [(w / 2) - (loadingWeather_w / 2),
-                                       (h / 2) - (loadingWeather_h / 2)]
-            screen.blit(loadingWeather, loadingWeather_position)
-            pygame.display.update()
-            #weather page setup
-            selectedframe = 0
-            weatherHourly('Burlington', 'VT', weather, hours)
-            radarframes = weatherRadar('Burlington', 'VT')
-
-        if doubletaptxt != '': #double tap to turn off
-            on = False
-
-    #NEWS PAGE
-    elif navigation == 'news':
-
-        #TITLE (Text Wrapped, scrolled)
-        newstitle = titlefont.render(wrappedtitle[0], True, white, black)
-        newstitle_w, newstitle_h = newstitle.get_rect().size
-        newstitle_position = [(w / 2) - (newstitle_w / 2), scroll + newstitle_h]
-        screen.blit(newstitle, newstitle_position)
-            
-        for line in range(1, len(wrappedtitle)):
-            try:
-                newstitle = titlefont.render(wrappedtitle[line], True, white, black)
-                newstitle_w, newstitle_h = newstitle.get_rect().size
-                newstitle_position = [newstitle_position[0], newstitle_h + newstitle_position[1]]
-                screen.blit(newstitle, newstitle_position)
-            except:
-                print("Unicode Error Unprintable character Found in News")
-
-        #Draw image if one exists
-        if newspaper[selectednews]['image'] != 'NULL':
-            newsimg_w, newsimg_h = newsimg.get_rect().size
-            newsimg_position = [(w / 2) - (newsimg_w / 2), newstitle_h + newstitle_position[1] + 5]
-            screen.blit(newsimg, newsimg_position)
-        else:
-            newsimg_position = [0, newstitle_h + newstitle_position[1]]
-            newsimg_h = 0
-
-        newsbody = textfont.render(wrappedtext[0].lstrip(), True, white, black)
-        newsbody_w, newsbody_h = newsbody.get_rect().size
-        newsbody_position = [(w / 2) - (newsbody_w / 2), 50 + newsimg_position[1] + newsimg_h]
-        screen.blit(newsbody, newsbody_position)
-
-        for line in range(1, len(wrappedtext)):
-            try:
-                newsbody = textfont.render(wrappedtext[line].lstrip(), True, white, black)
-                newsbody_w, newsbody_h = newsbody.get_rect().size
-                newsbody_position = [newsbody_position[0], newsbody_h + newsbody_position[1]]
-                screen.blit(newsbody, newsbody_position)
-
-                if newsbody_w < 600:
-                    newsbody_position[1] += newsbody_h
-            except:
-                print('you suckxd')
-
-        scroll = - airwheelint / 10
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-
-        if flicktxt == 'NS': #gesture from north to south
-            navigation = 'home'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
-            
-    #CALENDAR PAGE
-    elif navigation == 'calendar':
+        loading = titlefont.render('Fetching News', True, white)
+        loading_w, loading_h = loading.get_rect().size
+        loading_position = [(w / 2) - (loading_w / 2),
+                                   (h / 2) - (loading_h / 2)]
+        screen.blit(loading, loading_position)
+        pygame.display.update()
         
-        scale = 1.1
+        newsBasic(newspaper)
+
+        screen.fill(black)
+                
+        loading = titlefont.render('Fetching Weather', True, white)
+        loading_w, loading_h = loading.get_rect().size
+        loading_position = [(w / 2) - (loading_w / 2),
+                                   (h / 2) - (loading_h / 2)]
+        screen.blit(loading, loading_position)
+        pygame.display.update()
         
-        #draw 24 background lines and times
-        for i in range(0,24):
-            #lines
-            hourline_position1 = [(w / 2) - (markerwidth / 2), calendar_buffer + (scale * i * 60)]
-            hourline_position2 = [hourline_position1[0] + markerwidth, hourline_position1[1]]
-            pygame.draw.line(screen, grey, hourline_position1, hourline_position2)
+        weatherBasic('Burlington', 'VT', weather, hours)
 
-            #labels
-            if i == 0 or i == 24:
-                hourtxt = '12:00 AM'
-            elif i == 12:
-                hourtxt = '12:00 PM'
-            elif i < 12:
-                hourtxt = str(i) + ':00 AM'
-            else:
-                hourtxt = str(i - 12) + ':00 PM'
+        startup = False;
+        
+    while on:
+        
+        if datetime.datetime.now().hour == 0 and datetime.datetime.now().minute == 0:
+            calendar = []
+            get_calendar(credentials,calendar)
+        
+        #get time
+        displaytime, displaydate, hours, minutes, meridiem = getDateTime()
 
-            hourlabel = textfont.render(hourtxt, True, grey)
-            hourlabel_w, hourlabel_h = hourlabel.get_rect().size
-            hourlabel_position = [hourline_position1[0] - hourlabel_w , hourline_position1[1] - (hourlabel_h / 2)]
-            screen.blit(hourlabel, hourlabel_position)
+        #get display info
+        w, h = pygame.display.get_surface().get_size()
 
-        #red now line
-        nowline_position1 = [(w / 2) - (markerwidth / 2),
-                             calendar_buffer + ((datetime.datetime.now().hour * 60) + datetime.datetime.now().minute) * scale]
-        nowline_position2 = [nowline_position1[0] + markerwidth,
-                             nowline_position1[1]]
-        pygame.draw.line(screen, red, nowline_position1, nowline_position2)
+        #Reset Background
+        screen.fill(black)
 
-        nowlinelabel = textfont.render(datetime.datetime.now().strftime('%I:%M %p'), True, red)
-        nowlinelabel_w, nowlinelabel_h = nowlinelabel.get_rect().size
-        nowlinelabel_position = [nowline_position2[0] + 5,
-                                 nowline_position2[1] - (nowlinelabel_h / 2)]
-        screen.blit(nowlinelabel, nowlinelabel_position)
-
-        #Create Rectangles and text for each event
-        for event in range(0, len(calendar)):
-
-            #end events at midnight if they don't already
-            if calendar[event]['end'].day != datetime.datetime.now().day:
-                eoday = datetime.timedelta(hours = -calendar[event]['end'].hour, minutes = -calendar[event]['end'].minute - 1)
-                calendar[event]['end'] += eoday
-
-            eventBlock_top = calendar_buffer + ((calendar[event]['start'].hour * 60 + calendar[event]['start'].minute) * scale)
-            eventBlock_bot = calendar_buffer + ((calendar[event]['end'].hour * 60 + calendar[event]['end'].minute) * scale)
-            eventBlock_h = eventBlock_bot - eventBlock_top
-            calendar[event]['rect'] = Rect((w / 2) - (eventBlock_w / 2), eventBlock_top, eventBlock_w, eventBlock_h)
-
-        #draw rectangles and text for each event
-        for eventBlock in range(0, len(calendar)):
-
-            #check for colliding rectangles
-            for eventBlock2 in range(eventBlock, len(calendar)):
-                if eventBlock != eventBlock2 and calendar[eventBlock]['rect'].colliderect(calendar[eventBlock2]['rect']):
-
-                    calendar[eventBlock]['rect'].width /= 2
-                    calendar[eventBlock2]['rect'].width /= 2
-                    calendar[eventBlock2]['rect'].left = calendar[eventBlock]['rect'].right
-
-            eventlabel = captionfont.render(calendar[eventBlock]['name'], True, black)
-            eventlabel_w, eventlabel_h = eventlabel.get_rect().size
-            eventlabel_position = [calendar[eventBlock]['rect'].left +  5,
-                                   calendar[eventBlock]['rect'].top]
+        #HOME PAGE
+        if navigation == 'home':
             
-            eventtime = textfont.render(calendar[eventBlock]['start'].strftime('%I:%M %p') + ' to ' + calendar[eventBlock]['end'].strftime('%I:%M %p'),
-                                        True,
-                                        dark_grey)
-            eventtime_w, eventtime_h = eventtime.get_rect().size
+            #WEATHER BLOCK
+            #set up elements
+            weatherimg = pygame.image.load(weathericons[weather['icon_to_use']])
+            basictemp = numberfont.render(str(int(weather['current_temp'])) + '°F', True, white, black)
+            basictempcaption = captionfont.render('Current', True, white, black)
+            basictempcaption = pygame.transform.rotate(basictempcaption, 270)
+            basicfeelslike = numberfont.render(str(int(float(weather['current_realfeel']))) + '°F', True, white, black)
+            feelslikecaption = captionfont.render('Feels Like', True, white, black)
+            feelslikecaption = pygame.transform.rotate(feelslikecaption, 270)
 
-            if eventlabel_h + eventtime_h <= calendar[eventBlock]['rect'].height + 10:
-                eventtime_position = [eventlabel_position[0],
-                                      eventlabel_position[1] + eventlabel_h]
-            else:
-                eventtime_position = [eventlabel_position[0] + eventlabel_w + 10,
-                                      calendar[eventBlock]['rect'].bottom - eventtime_h]
+            #get elements sizes
+            weatherimg_w, weatherimg_h = weatherimg.get_rect().size
+            basictemp_w,basictemp_h = basictemp.get_rect().size
+            basicfeelslike_w,basicfeelslike_h = basicfeelslike.get_rect().size
 
-            if selectedevent == eventBlock:
-                pygame.draw.rect(screen, white, calendar[eventBlock]['rect'].inflate(-1,-1))
-            else:
-                pygame.draw.rect(screen, grey, calendar[eventBlock]['rect'].inflate(-2,-2))
+            #positionelements relative to weatherimg 
+            basictemp_position = [weatherimg_position[0] + (weatherimg_w / 2) - (basictemp_w / 2), weatherimg_h + weatherimg_position[1] + 15]
+            basictempcaption_position = [basictemp_w + basictemp_position[0], weatherimg_h + weatherimg_position[1] + 25]
+            basicfeelslike_position = [weatherimg_position[0] + (weatherimg_w / 2) - (basictemp_w / 2), basictemp_position[1] + basictemp_h]
+            feelslikecaption_position = [basicfeelslike_w + basicfeelslike_position[0], basictemp_h + basictemp_position[1]]
 
-            screen.blit(eventlabel, eventlabel_position)
-            screen.blit(eventtime, eventtime_position)
+            #draw objects
+            screen.blit(weatherimg, weatherimg_position)
+            screen.blit(basictemp, basictemp_position)
+            screen.blit(basictempcaption, basictempcaption_position)
+            screen.blit(basicfeelslike, basicfeelslike_position)
+            screen.blit(feelslikecaption, feelslikecaption_position)
 
-        #selecting event
-        scroll = airwheelint / 360
 
-        if int(scroll) > len(calendar):
-            scroll = 0
-            airwheelint = 0
-        elif int(scroll) < 0:
-            scroll = len(calendar)
-            airwheelint = len(calendar) * 360
+            #TIMEDATE BLOCK
+            #set up elements
+            timeblock = timefont.render(displaytime, True, white, black)
+            dateblock = datefont.render(displaydate, True, white, black)
 
-        selectedevent = int(scroll)
+            #get element sizes
+            timeblock_w, timeblock_h = timeblock.get_rect().size
+            dateblock_w, dateblock_h = dateblock.get_rect().size
 
-    
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+            #position relative to time and right side of screen
+            timeblock_position = [w - timeblock_w - 30, 30]
+            dateblock_position = [w - dateblock_w - 30, timeblock_h]
 
-        if flicktxt == 'WE': #gesture from West to East for Home
-            navigation = 'home'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
+            #draw elements
+            screen.blit(timeblock, timeblock_position)
+            screen.blit(dateblock, dateblock_position)
 
-        if flicktxt == 'EW': #gesture from east to west for further event data
-            if len(calendar) > 0:
-                navigation = 'event'
+            #NEWS BLOCK
+            #block of visible news
+            visiblenews = Rect(0, h - 400, w, 300)
+            
+            #news label
+            newslabel_position = [(w / 2) - (newslabel_w / 2), visiblenews.top - newslabel_h]
+            screen.blit(newslabel, newslabel_position)
+            
+            #news headlines
+            for article in range (0, len(newspaper) - 1):
+
+                newsitem = textfont.render(newspaper[article]['title'], True, white, black)
+                newsitem_w, newsitem_h = newsitem.get_rect().size
+                newsitem_position = [(w / 2) - (newsitem_w / 2), scroll + (h / 2) + (article * newsitem_h)]
+
+                #check if news item is in visible news box
+                if newsitem_position[1] < visiblenews.bottom and newsitem_position[1] > visiblenews.top:
+
+                    #check if center of visible box is inside news item and selected item if true
+                    if visiblenews.top + visiblenews.height / 2 > newsitem_position[1] and visiblenews.top + visiblenews.height / 2 < newsitem_position[1] + newsitem_h:
+                        selectednews = article
+                    #check if center of visible box is below bottom of news item
+                    elif visiblenews.top + visiblenews.height / 2 > newsitem_position[1] + newsitem_h:
+                        rgbval = 220 * (newsitem_position[1] - visiblenews.top) / (visiblenews.height / 2)
+                        
+                        if rgbval > 255:
+                            rgbval = 255
+                        elif rgbval < 0:
+                            rgbval = 0
+                            
+                        color = (rgbval, rgbval, rgbval)
+                        newsitem = textfont.render(newspaper[article]['title'], True, color, black)
+                    else:
+                        rgbval = 220 * (visiblenews.bottom - newsitem_position[1]) / (visiblenews.height / 2)
+                        
+                        if rgbval > 255:
+                            rgbval = 255
+                        elif rgbval < 0:
+                            rgbval = 0
+                            
+                        color = (rgbval, rgbval, rgbval)
+                        newsitem = textfont.render(newspaper[article]['title'], True, color, black)
+                    
+                    screen.blit(newsitem, newsitem_position)
+
+
+            scroll = - airwheelint / 20
+
+            #event listner
+            for event in pygame.event.get():
+                if event.type == GETWEATHER:
+                    print('Fetching Weather')
+                    weatherBasic('Burlington', 'VT', weather, hours)
+                if event.type == GETNEWS:
+                    print('Fetching News')
+                    newspaper = {}
+                    newsBasic(newspaper)
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                    
+            if flicktxt == 'SN': #gesture from South to north
+                navigation = 'news'
                 scroll = 0
                 airwheelint = 0
                 flicktxt = ''
-                weatherHourly('Burlington', 'VT', weather, hours)
-                wrappedtext = wraptext(calendar[selectedevent]['description'], captionfont, 800)
+                if newspaper[selectednews]['image'] != 'NULL':
+                    urllib.request.urlretrieve(newspaper[selectednews]['image'], 'newsimage.jpg')
+                    newsimg = pygame.image.load('newsimage.jpg')
+
+                wrappedtitle = wraptext(newspaper[selectednews]['title'], titlefont, 900)
+                wrappedtext = wraptext(newspaper[selectednews]['body'], textfont, 800)
                 
 
-    elif navigation == 'event':
-        #is this event in the future?
-        if calendar[selectedevent]['start'] > datetime.datetime.now():
-            timeuntil_time = calendar[selectedevent]['start'] - datetime.datetime.now()
-            timeuntil_txt = 'Starts in ' + str(int(timeuntil_time.seconds / (60 * 60))) + ' Hours ' + str(int(timeuntil_time.seconds / 60) % 60) + ' Minutes'
-            timeuntil_color = red
+            if flicktxt == 'EW': #gesture from east to west
+                navigation = 'calendar'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+                selectedevent = 0
+
+            if flicktxt == 'WE': #gesture from west to east
+                navigation = 'weather'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+
+                #loading screen
+                screen.fill(black)
+                
+                loadingWeather = titlefont.render('Getting Your Weather', True, white)
+                loadingWeather_w, loadingWeather_h = loadingWeather.get_rect().size
+                loadingWeather_position = [(w / 2) - (loadingWeather_w / 2),
+                                           (h / 2) - (loadingWeather_h / 2)]
+                screen.blit(loadingWeather, loadingWeather_position)
+                pygame.display.update()
+                #weather page setup
+                selectedframe = 0
+                weatherHourly('Burlington', 'VT', weather, hours)
+                radarframes = weatherRadar('Burlington', 'VT')
+
+            if doubletaptxt != '': #double tap to turn off
+                on = False
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+                doubletaptxt = ''
+
+        #NEWS PAGE
+        elif navigation == 'news':
+
+            #TITLE (Text Wrapped, scrolled)
+            newstitle = titlefont.render(wrappedtitle[0], True, white, black)
+            newstitle_w, newstitle_h = newstitle.get_rect().size
+            newstitle_position = [(w / 2) - (newstitle_w / 2), scroll + newstitle_h]
+            screen.blit(newstitle, newstitle_position)
+                
+            for line in range(1, len(wrappedtitle)):
+                try:
+                    newstitle = titlefont.render(wrappedtitle[line], True, white, black)
+                    newstitle_w, newstitle_h = newstitle.get_rect().size
+                    newstitle_position = [newstitle_position[0], newstitle_h + newstitle_position[1]]
+                    screen.blit(newstitle, newstitle_position)
+                except:
+                    print("Unicode Error Unprintable character Found in News")
+
+            #Draw image if one exists
+            if newspaper[selectednews]['image'] != 'NULL':
+                newsimg_w, newsimg_h = newsimg.get_rect().size
+                newsimg_position = [(w / 2) - (newsimg_w / 2), newstitle_h + newstitle_position[1] + 5]
+                screen.blit(newsimg, newsimg_position)
+            else:
+                newsimg_position = [0, newstitle_h + newstitle_position[1]]
+                newsimg_h = 0
+
+            newsbody = textfont.render(wrappedtext[0].lstrip(), True, white, black)
+            newsbody_w, newsbody_h = newsbody.get_rect().size
+            newsbody_position = [(w / 2) - (newsbody_w / 2), 50 + newsimg_position[1] + newsimg_h]
+            screen.blit(newsbody, newsbody_position)
+
+            for line in range(1, len(wrappedtext)):
+                try:
+                    newsbody = textfont.render(wrappedtext[line].lstrip(), True, white, black)
+                    newsbody_w, newsbody_h = newsbody.get_rect().size
+                    newsbody_position = [newsbody_position[0], newsbody_h + newsbody_position[1]]
+                    screen.blit(newsbody, newsbody_position)
+
+                    if newsbody_w < 600:
+                        newsbody_position[1] += newsbody_h
+                except:
+                    print('you suckxd')
+
+            scroll = - airwheelint / 10
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            if flicktxt == 'NS': #gesture from north to south
+                navigation = 'home'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+                
+        #CALENDAR PAGE
+        elif navigation == 'calendar':
             
-        else:
-            timeuntil_txt = 'This Event Already Happened'
-            timeuntil_color = grey
-
-        timeuntil = datefont.render(timeuntil_txt, True, timeuntil_color, black)
-        timeuntil_w, timeuntil_h = timeuntil.get_rect().size
-        timeuntil_position = [ w - timeuntil_w - 50, 50 ]
-        screen.blit(timeuntil, timeuntil_position)
-
-        eventtitle = titlefont.render(calendar[selectedevent]['name'], True, white, black)
-        eventtitle_w, eventtitle_h = eventtitle.get_rect().size
-        eventtitle_position = [ 50, timeuntil_position[1] + timeuntil_h]
-        screen.blit(eventtitle, eventtitle_position)
-
-        start2end_txt = calendar[selectedevent]['start'].strftime('%I:%M %p') + ' - ' + calendar[selectedevent]['end'].strftime('%I:%M %p')
-        start2end = datefont.render(start2end_txt, True, white)
-        start2end_w, start2end_h = start2end.get_rect().size
-        start2end_position = [50, eventtitle_position[1] + eventtitle_h]
-        screen.blit(start2end, start2end_position)
-
-        location = datefont.render(calendar[selectedevent]['location'], True, white, black)
-        location_w, location_h = location.get_rect().size
-        location_position = [50, start2end_position[1] + start2end_h]
-        screen.blit(location, location_position)
-
-        for line in range(0, len(wrappedtext)):
-            description = captionfont.render(wrappedtext[line], True, white, black)
-            description_w, description_h = description.get_rect().size
-            description_position = [50, location_position[1] + 2 * location_h + (line * description_h)]
-            screen.blit(description, description_position)
-
-        linecount = 0;
+            scale = 1.1
             
-        if calendar[selectedevent]['start'].hour > datetime.datetime.now().hour:
-            for indexhour in range(calendar[selectedevent]['start'].hour - 1, calendar[selectedevent]['end'].hour):
-                hour = indexhour - datetime.datetime.now().hour
+            #draw 24 background lines and times
+            for i in range(0,24):
+                #lines
+                hourline_position1 = [(w / 2) - (markerwidth / 2), calendar_buffer + (scale * i * 60)]
+                hourline_position2 = [hourline_position1[0] + markerwidth, hourline_position1[1]]
+                pygame.draw.line(screen, grey, hourline_position1, hourline_position2)
+
+                #labels
+                if i == 0 or i == 24:
+                    hourtxt = '12:00 AM'
+                elif i == 12:
+                    hourtxt = '12:00 PM'
+                elif i < 12:
+                    hourtxt = str(i) + ':00 AM'
+                else:
+                    hourtxt = str(i - 12) + ':00 PM'
+
+                hourlabel = textfont.render(hourtxt, True, grey)
+                hourlabel_w, hourlabel_h = hourlabel.get_rect().size
+                hourlabel_position = [hourline_position1[0] - hourlabel_w , hourline_position1[1] - (hourlabel_h / 2)]
+                screen.blit(hourlabel, hourlabel_position)
+
+            #red now line
+            nowline_position1 = [(w / 2) - (markerwidth / 2),
+                                 calendar_buffer + ((datetime.datetime.now().hour * 60) + datetime.datetime.now().minute) * scale]
+            nowline_position2 = [nowline_position1[0] + markerwidth,
+                                 nowline_position1[1]]
+            pygame.draw.line(screen, red, nowline_position1, nowline_position2)
+
+            nowlinelabel = textfont.render(datetime.datetime.now().strftime('%I:%M %p'), True, red)
+            nowlinelabel_w, nowlinelabel_h = nowlinelabel.get_rect().size
+            nowlinelabel_position = [nowline_position2[0] + 5,
+                                     nowline_position2[1] - (nowlinelabel_h / 2)]
+            screen.blit(nowlinelabel, nowlinelabel_position)
+
+            #Create Rectangles and text for each event
+            for event in range(0, len(calendar)):
+
+                #end events at midnight if they don't already
+                if calendar[event]['end'].day != datetime.datetime.now().day:
+                    eoday = datetime.timedelta(hours = -calendar[event]['end'].hour, minutes = -calendar[event]['end'].minute - 1)
+                    calendar[event]['end'] += eoday
+
+                eventBlock_top = calendar_buffer + ((calendar[event]['start'].hour * 60 + calendar[event]['start'].minute) * scale)
+                eventBlock_bot = calendar_buffer + ((calendar[event]['end'].hour * 60 + calendar[event]['end'].minute) * scale)
+                eventBlock_h = eventBlock_bot - eventBlock_top
+                calendar[event]['rect'] = Rect((w / 2) - (eventBlock_w / 2), eventBlock_top, eventBlock_w, eventBlock_h)
+
+            #draw rectangles and text for each event
+            for eventBlock in range(0, len(calendar)):
+
+                #check for colliding rectangles
+                for eventBlock2 in range(eventBlock, len(calendar)):
+                    if eventBlock != eventBlock2 and calendar[eventBlock]['rect'].colliderect(calendar[eventBlock2]['rect']):
+
+                        calendar[eventBlock]['rect'].width /= 2
+                        calendar[eventBlock2]['rect'].width /= 2
+                        calendar[eventBlock2]['rect'].left = calendar[eventBlock]['rect'].right
+
+                eventlabel = captionfont.render(calendar[eventBlock]['name'], True, black)
+                eventlabel_w, eventlabel_h = eventlabel.get_rect().size
+                eventlabel_position = [calendar[eventBlock]['rect'].left +  5,
+                                       calendar[eventBlock]['rect'].top]
+                
+                eventtime = textfont.render(calendar[eventBlock]['start'].strftime('%I:%M %p') + ' to ' + calendar[eventBlock]['end'].strftime('%I:%M %p'),
+                                            True,
+                                            dark_grey)
+                eventtime_w, eventtime_h = eventtime.get_rect().size
+
+                if eventlabel_h + eventtime_h <= calendar[eventBlock]['rect'].height + 10:
+                    eventtime_position = [eventlabel_position[0],
+                                          eventlabel_position[1] + eventlabel_h]
+                else:
+                    eventtime_position = [eventlabel_position[0] + eventlabel_w + 10,
+                                          calendar[eventBlock]['rect'].bottom - eventtime_h]
+
+                if selectedevent == eventBlock:
+                    pygame.draw.rect(screen, white, calendar[eventBlock]['rect'].inflate(-1,-1))
+                else:
+                    pygame.draw.rect(screen, grey, calendar[eventBlock]['rect'].inflate(-2,-2))
+
+                screen.blit(eventlabel, eventlabel_position)
+                screen.blit(eventtime, eventtime_position)
+
+            #selecting event
+            scroll = airwheelint / 360
+
+            if int(scroll) > len(calendar):
+                scroll = 0
+                airwheelint = 0
+            elif int(scroll) < 0:
+                scroll = len(calendar)
+                airwheelint = len(calendar) * 360
+
+            selectedevent = int(scroll)
+
+        
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            if flicktxt == 'WE': #gesture from West to East for Home
+                navigation = 'home'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+
+            if flicktxt == 'EW': #gesture from east to west for further event data
+                if len(calendar) > 0:
+                    navigation = 'event'
+                    scroll = 0
+                    airwheelint = 0
+                    flicktxt = ''
+                    weatherHourly('Burlington', 'VT', weather, hours)
+                    wrappedtext = wraptext(calendar[selectedevent]['description'], captionfont, 800)
+                    
+
+        elif navigation == 'event':
+            #is this event in the future?
+            if calendar[selectedevent]['start'] > datetime.datetime.now():
+                timeuntil_time = calendar[selectedevent]['start'] - datetime.datetime.now()
+                timeuntil_txt = 'Starts in ' + str(int(timeuntil_time.seconds / (60 * 60))) + ' Hours ' + str(int(timeuntil_time.seconds / 60) % 60) + ' Minutes'
+                timeuntil_color = red
+                
+            else:
+                timeuntil_txt = 'This Event Already Happened'
+                timeuntil_color = grey
+
+            timeuntil = datefont.render(timeuntil_txt, True, timeuntil_color, black)
+            timeuntil_w, timeuntil_h = timeuntil.get_rect().size
+            timeuntil_position = [ w - timeuntil_w - 50, 50 ]
+            screen.blit(timeuntil, timeuntil_position)
+
+            eventtitle = titlefont.render(calendar[selectedevent]['name'], True, white, black)
+            eventtitle_w, eventtitle_h = eventtitle.get_rect().size
+            eventtitle_position = [ 50, timeuntil_position[1] + timeuntil_h]
+            screen.blit(eventtitle, eventtitle_position)
+
+            start2end_txt = calendar[selectedevent]['start'].strftime('%I:%M %p') + ' - ' + calendar[selectedevent]['end'].strftime('%I:%M %p')
+            start2end = datefont.render(start2end_txt, True, white)
+            start2end_w, start2end_h = start2end.get_rect().size
+            start2end_position = [50, eventtitle_position[1] + eventtitle_h]
+            screen.blit(start2end, start2end_position)
+
+            location = datefont.render(calendar[selectedevent]['location'], True, white, black)
+            location_w, location_h = location.get_rect().size
+            location_position = [50, start2end_position[1] + start2end_h]
+            screen.blit(location, location_position)
+
+            for line in range(0, len(wrappedtext)):
+                description = captionfont.render(wrappedtext[line], True, white, black)
+                description_w, description_h = description.get_rect().size
+                description_position = [50, location_position[1] + 2 * location_h + (line * description_h)]
+                screen.blit(description, description_position)
+
+            linecount = 0;
+                
+            if calendar[selectedevent]['start'].hour > datetime.datetime.now().hour:
+                for indexhour in range(calendar[selectedevent]['start'].hour - 1, calendar[selectedevent]['end'].hour):
+                    hour = indexhour - datetime.datetime.now().hour
+                    hourimage_lg = pygame.image.load(weathericons[weather['hourly'][hour]['icon_to_use']])
+                    hourimage_lg_w, hourimage_lg_h = hourimage_lg.get_rect().size
+
+                    hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 4), int(hourimage_lg_h / 4)))
+                    hourimage_h, hourimage_w = hourimage.get_rect().size
+                    hourimage_position = [50, hourly_top + (hourly_scale * linecount)]
+
+                    screen.blit(hourimage, hourimage_position)
+
+                    hourtime = captionfont.render(weather['hourly'][hour]['time'], True, white, black)
+                    hourtime_w, hourtime_h = hourtime.get_rect().size
+                    hourtime_position = [hourimage_position[0] + 125,
+                                         hourimage_position[1] + (hourimage_h / 2) - (hourimage_h / 2)]
+                    screen.blit(hourtime, hourtime_position)
+
+                    hourtemp = captionfont.render(weather['hourly'][hour]['temperature'] + '°F,  Feels Like ' + weather['hourly'][hour]['real_feel'] + '°F', True, white)
+                    hourtemp_w, hourtemp_h = hourtemp.get_rect().size
+                    hourtemp_position = [hourtime_position[0] + 130,
+                                         hourtime_position[1]]
+                    screen.blit(hourtemp, hourtemp_position)
+
+                    hourrain = captionfont.render(weather['hourly'][hour]['chance_rain'] + '% Chance Percipitation', True, white, black)
+                    hourrain_w, hourrain_h = hourrain.get_rect().size
+                    hourrain_position = [hourtime_position[1] + 130,
+                                         hourtime_position[1]]
+                    screen.blit(hourrain, hourrain_position)
+
+                    linecount += 1
+
+            if flicktxt == 'WE': #gesture from West to East for Calendar
+                navigation = 'calendar'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
+
+        elif navigation == 'weather':
+
+            #radar drawing
+            mapimage = pygame.image.load('basemap.png')
+            radarimage = pygame.image.load('radar' + str(selectedframe) + '.png')
+
+            mapimage_w, mapimage_h = mapimage.get_rect().size
+            mapimage_position = [(w / 2) - (mapimage_w / 2), 100]
+
+            screen.blit(mapimage, mapimage_position)
+            screen.blit(radarimage, mapimage_position)
+
+            #hourly forecast drawing
+            for hour in range(0, 10):
+
                 hourimage_lg = pygame.image.load(weathericons[weather['hourly'][hour]['icon_to_use']])
                 hourimage_lg_w, hourimage_lg_h = hourimage_lg.get_rect().size
 
                 hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 4), int(hourimage_lg_h / 4)))
                 hourimage_h, hourimage_w = hourimage.get_rect().size
-                hourimage_position = [50, hourly_top + (hourly_scale * linecount)]
+                hourimage_position = [mapimage_position[0], hourly_top + (hourly_scale * hour)]
 
                 screen.blit(hourimage, hourimage_position)
 
@@ -613,85 +718,35 @@ while on:
 
                 hourrain = captionfont.render(weather['hourly'][hour]['chance_rain'] + '% Chance Percipitation', True, white, black)
                 hourrain_w, hourrain_h = hourrain.get_rect().size
-                hourrain_position = [hourtime_position[1] + 130,
+                hourrain_position = [mapimage_position[0] + mapimage_w - hourrain_w,
                                      hourtime_position[1]]
                 screen.blit(hourrain, hourrain_position)
 
-                linecount += 1
+            #selecting radar frame
+            scroll = airwheelint / 100
 
-        if flicktxt == 'WE': #gesture from West to East for Calendar
-            navigation = 'calendar'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
+            if int(scroll) > radarframes - 1:
+                scroll = 0
+                airwheelint = 0
+            elif int(scroll) < 0:
+                scroll = radarframes -1
+                airwheelint = (radarframes - 1) * 100
 
-    elif navigation == 'weather':
+            selectedframe = int(scroll)
 
-        #radar drawing
-        mapimage = pygame.image.load('basemap.png')
-        radarimage = pygame.image.load('radar' + str(selectedframe) + '.png')
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-        mapimage_w, mapimage_h = mapimage.get_rect().size
-        mapimage_position = [(w / 2) - (mapimage_w / 2), 100]
+            if flicktxt == 'EW': #gesture from east to west
+                navigation = 'home'
+                scroll = 0
+                airwheelint = 0
+                flicktxt = ''
 
-        screen.blit(mapimage, mapimage_position)
-        screen.blit(radarimage, mapimage_position)
-
-        #hourly forecast drawing
-        for hour in range(0, 10):
-
-            hourimage_lg = pygame.image.load(weathericons[weather['hourly'][hour]['icon_to_use']])
-            hourimage_lg_w, hourimage_lg_h = hourimage_lg.get_rect().size
-
-            hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 4), int(hourimage_lg_h / 4)))
-            hourimage_h, hourimage_w = hourimage.get_rect().size
-            hourimage_position = [mapimage_position[0], hourly_top + (hourly_scale * hour)]
-
-            screen.blit(hourimage, hourimage_position)
-
-            hourtime = captionfont.render(weather['hourly'][hour]['time'], True, white, black)
-            hourtime_w, hourtime_h = hourtime.get_rect().size
-            hourtime_position = [hourimage_position[0] + 125,
-                                 hourimage_position[1] + (hourimage_h / 2) - (hourimage_h / 2)]
-            screen.blit(hourtime, hourtime_position)
-
-            hourtemp = captionfont.render(weather['hourly'][hour]['temperature'] + '°F,  Feels Like ' + weather['hourly'][hour]['real_feel'] + '°F', True, white)
-            hourtemp_w, hourtemp_h = hourtemp.get_rect().size
-            hourtemp_position = [hourtime_position[0] + 130,
-                                 hourtime_position[1]]
-            screen.blit(hourtemp, hourtemp_position)
-
-            hourrain = captionfont.render(weather['hourly'][hour]['chance_rain'] + '% Chance Percipitation', True, white, black)
-            hourrain_w, hourrain_h = hourrain.get_rect().size
-            hourrain_position = [mapimage_position[0] + mapimage_w - hourrain_w,
-                                 hourtime_position[1]]
-            screen.blit(hourrain, hourrain_position)
-
-        #selecting radar frame
-        scroll = airwheelint / 100
-
-        if int(scroll) > radarframes - 1:
-            scroll = 0
-            airwheelint = 0
-        elif int(scroll) < 0:
-            scroll = radarframes -1
-            airwheelint = (radarframes - 1) * 100
-
-        selectedframe = int(scroll)
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-
-        if flicktxt == 'EW': #gesture from east to west
-            navigation = 'home'
-            scroll = 0
-            airwheelint = 0
-            flicktxt = ''
-
-    pygame.display.update()
-    clock.tick(60)
+        pygame.display.update()
+        clock.tick(60)
 
 pygame.quit()
 quit()
