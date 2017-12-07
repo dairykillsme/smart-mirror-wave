@@ -16,7 +16,7 @@ credentials = get_credentials()
 pygame.init()
 
 screen = pygame.display.set_mode()
-#pygame.display.toggle_fullscreen()
+pygame.display.toggle_fullscreen()
 pygame.display.set_caption('Smart Mirror V0.1')
 
 pygame.mouse.set_visible(False)
@@ -584,6 +584,40 @@ while on:
             description_w, description_h = description.get_rect().size
             description_position = [50, location_position[1] + 2 * location_h + (line * description_h)]
             screen.blit(description, description_position)
+
+        linecount = 0;
+            
+        if calendar[selectedevent]['start'].hour > datetime.datetime.now().hour:
+            for indexhour in range(calendar[selectedevent]['start'].hour - 1, calendar[selectedevent]['end'].hour):
+                hour = indexhour - datetime.datetime.now().hour
+                hourimage_lg = pygame.image.load(weathericons[weather['hourly'][hour]['icon_to_use']])
+                hourimage_lg_w, hourimage_lg_h = hourimage_lg.get_rect().size
+
+                hourimage = pygame.transform.scale(hourimage_lg, (int(hourimage_lg_w / 4), int(hourimage_lg_h / 4)))
+                hourimage_h, hourimage_w = hourimage.get_rect().size
+                hourimage_position = [50, hourly_top + (hourly_scale * linecount)]
+
+                screen.blit(hourimage, hourimage_position)
+
+                hourtime = captionfont.render(weather['hourly'][hour]['time'], True, white, black)
+                hourtime_w, hourtime_h = hourtime.get_rect().size
+                hourtime_position = [hourimage_position[0] + 125,
+                                     hourimage_position[1] + (hourimage_h / 2) - (hourimage_h / 2)]
+                screen.blit(hourtime, hourtime_position)
+
+                hourtemp = captionfont.render(weather['hourly'][hour]['temperature'] + '°F,  Feels Like ' + weather['hourly'][hour]['real_feel'] + '°F', True, white)
+                hourtemp_w, hourtemp_h = hourtemp.get_rect().size
+                hourtemp_position = [hourtime_position[0] + 130,
+                                     hourtime_position[1]]
+                screen.blit(hourtemp, hourtemp_position)
+
+                hourrain = captionfont.render(weather['hourly'][hour]['chance_rain'] + '% Chance Percipitation', True, white, black)
+                hourrain_w, hourrain_h = hourrain.get_rect().size
+                hourrain_position = [hourtime_position[1] + 130,
+                                     hourtime_position[1]]
+                screen.blit(hourrain, hourrain_position)
+
+                linecount += 1
 
         if flicktxt == 'WE': #gesture from West to East for Calendar
             navigation = 'calendar'
