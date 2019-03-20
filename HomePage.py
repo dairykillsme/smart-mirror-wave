@@ -34,16 +34,17 @@ date = ''
 time = ''
 
 #icon locations
-weathericons = {'clear':'clear.png',
+weathericons = {'clear-day':'clear.png',
                 'cloudy':'cloudy.png',
                 'fog':'fog.png',
-                'night':'clear_night.png',
-                'partlycloudy':'partly_day.png',
-                'nt_partlycloudy':'partly_night.png',
+                'clear-night':'clear_night.png',
+                'partly-cloudy-day':'partly_day.png',
+                'partly-cloudy-night':'partly_night.png',
                 'rain':'rain.png',
                 'sleet':'sleet.png',
                 'snow':'snow.png',
-                'thunderstorm':'thunderstorm.png'}
+                'thunderstorm':'thunderstorm.png',
+                'wind':'wind.png'}
 
 #Set Up Weather Data Gathering
 GETWEATHER = USEREVENT + 1
@@ -246,7 +247,7 @@ while idle:
         screen.blit(loading, loading_position)
         pygame.display.update()
         
-        weatherBasic('Burlington', 'VT', weather, hours)
+        weatherBasic('44.4759', '-73.2121', weather, hours)
 
         startup = False;
         
@@ -366,7 +367,7 @@ while idle:
             for event in pygame.event.get():
                 if event.type == GETWEATHER:
                     print('Fetching Weather')
-                    weatherBasic('Burlington', 'VT', weather, hours)
+                    weatherBasic('44.4759', '-73.2121', weather, hours)
                 if event.type == GETNEWS:
                     print('Fetching News')
                     newspaper = {}
@@ -412,7 +413,7 @@ while idle:
                 pygame.display.update()
                 #weather page setup
                 selectedframe = 0
-                weatherHourly('Burlington', 'VT', weather, hours)
+                weatherHourly('44.4759', '-73.2121', weather, hours)
                 radarframes = weatherRadar('Burlington', 'VT')
 
             if doubletaptxt != '': #double tap to turn off
@@ -598,7 +599,7 @@ while idle:
                     scroll = 0
                     airwheelint = 0
                     flicktxt = ''
-                    weatherHourly('Burlington', 'VT', weather, hours)
+                    weatherHourly('44.4759', '-73.2121', weather, hours)
                     wrappedtext = wraptext(calendar[selectedevent]['description'], captionfont, 800)
                     
 
