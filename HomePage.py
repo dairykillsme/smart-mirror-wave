@@ -661,13 +661,13 @@ while idle:
                                          hourimage_position[1] + (hourimage_h / 2) - (hourimage_h / 2)]
                     screen.blit(hourtime, hourtime_position)
 
-                    hourtemp = captionfont.render(weather['hourly'][hour]['temperature'] + '°F,  Feels Like ' + weather['hourly'][hour]['real_feel'] + '°F', True, white)
+                    hourtemp = captionfont.render(str(weather['hourly'][hour]['temperature']) + '°F,  Feels Like ' + str(weather['hourly'][hour]['real_feel']) + '°F', True, white)
                     hourtemp_w, hourtemp_h = hourtemp.get_rect().size
                     hourtemp_position = [hourtime_position[0] + 130,
                                          hourtime_position[1]]
                     screen.blit(hourtemp, hourtemp_position)
 
-                    hourrain = captionfont.render(weather['hourly'][hour]['chance_rain'] + '% Chance Percipitation', True, white, black)
+                    hourrain = captionfont.render(str(weather['hourly'][hour]['chance_rain']) + '% Chance Percipitation', True, white, black)
                     hourrain_w, hourrain_h = hourrain.get_rect().size
                     hourrain_position = [hourtime_position[1] + 130,
                                          hourtime_position[1]]
