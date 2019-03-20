@@ -33,7 +33,7 @@ def newsBasic(newspaper):
     yesterday = today - day
 
     #Get Page from WebHose language:english site_type:news site:nytimes.com performance_score:10 
-    url = 'http://webhose.io/filterWebContent?token=8c25a471-9249-46cd-834c-2248d9ae99a2&format=json&ts=' + str(yesterday) + '&sort=crawled&q=language%3Aenglish%20site%3Anytimes.com%20has_video%3Afalse%20performance_score%3A%3E1'
+    url = 'http://webhose.io/filterWebContent?token=8c25a471-9249-46cd-834c-2248d9ae99a2&format=json&ts=' + str(yesterday) + '&sort=crawled&q=language%3Aenglish%20site%3Anpr.org%20spam_score%3A0'
     page = urllib.request.urlopen(url)
     
     #Convert Page into JSON Readable
