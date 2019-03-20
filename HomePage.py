@@ -655,7 +655,7 @@ while idle:
 
                     screen.blit(hourimage, hourimage_position)
 
-                    hourtime = captionfont.render(weather['hourly'][hour]['time'], True, white, black)
+                    hourtime = captionfont.render(datetime.datetime.utcfromtimestamp(weather['hourly'][hour]['time']).strftime('%I:%M %p'), True, white, black)
                     hourtime_w, hourtime_h = hourtime.get_rect().size
                     hourtime_position = [hourimage_position[0] + 125,
                                          hourimage_position[1] + (hourimage_h / 2) - (hourimage_h / 2)]
