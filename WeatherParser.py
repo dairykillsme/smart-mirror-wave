@@ -19,9 +19,6 @@ def weatherBasic( latitude, longitude, weather, hours):
     weather['current_realfeel'] = parsed_json['currently']['apparentTemperature']
     weather['icon_to_use'] = parsed_json['currently']['icon']
 
-    if weather['icon_to_use'] == 'wind'
-        weather['icon_to_use'] == 
-
     page.close()
 
     return
