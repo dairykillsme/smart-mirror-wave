@@ -54,8 +54,8 @@ def get_calendar(service, calendar):
         strEnd = event['end'].get('dateTime')
 
         if strStart and strEnd:
-            start = datetime.datetime.strptime(strStart, '%Y-%m-%dT%H:%M:%S%z')
-            end = datetime.datetime.strptime(strEnd, '%Y-%m-%dT%H:%M:%S%z')
+            start = datetime.datetime.strptime(strStart[:19], '%Y-%m-%dT%H:%M:%S')
+            end = datetime.datetime.strptime(strEnd[:19], '%Y-%m-%dT%H:%M:%S')
 
             if start.day == datetime.datetime.now().day:
                 
