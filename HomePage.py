@@ -4,13 +4,13 @@ from pygame.locals import *
 from WeatherParser import weatherBasic, weatherRadar, weatherHourly
 from TimeAndDate import getDateTime
 from NewsParser import newsBasic
-from GoogleCalendar import get_credentials, get_calendar
+from GoogleCalendar import get_calendar_service, get_calendar
 import urllib.request
 import flicklib
 import datetime
 
 #google calendar set up
-credentials = get_credentials()
+service = get_calendar_service()
 
 #Pygame Set up
 pygame.init()
@@ -225,7 +225,7 @@ while idle:
         screen.blit(loading, loading_position)
         pygame.display.update()
         
-        get_calendar(credentials,calendar)
+        get_calendar(service, calendar)
 
         screen.fill(black)
                 
@@ -255,7 +255,7 @@ while idle:
         
         if datetime.datetime.now().hour == 0 and datetime.datetime.now().minute == 0:
             calendar = []
-            get_calendar(credentials,calendar)
+            get_calendar(service, calendar)
         
         #get time
         displaytime, displaydate, hours, minutes, meridiem = getDateTime()

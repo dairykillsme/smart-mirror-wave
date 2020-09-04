@@ -2,7 +2,7 @@ import urllib.request
 import json
 from PIL import Image
 
-darkSkySecret = 'ee0942799d9678f785560fb85d7d4ec5';
+darkSkySecret = 'ee0942799d9678f785560fb85d7d4ec5'
 
 #this file is for scraping weather data from Darksky and Open Weather Map
 def weatherBasic( latitude, longitude, weather, hours):
